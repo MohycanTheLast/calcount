@@ -14,14 +14,15 @@
 // Root shell aplikace – sem se nedává konkrétní obsah typu <Main />.
 // Obsah se rendruje podle rout z /pages přes <NuxtPage />.
 
-const { isAuthenticated, loadFromStorage, isAccessTokenValid, refreshAccessToken } = useAuth()
+const { isAuthenticated, loadFromStorage, hasValidAccessToken, refreshAccessToken } = useAuth()
+const { fetchFromApi } = useUserSettings()
 const authChecking = ref(true)
 
 onMounted(async () => {
     loadFromStorage()
 
     // Pokud je uživatel přihlášen, zkontroluj platnost tokenu
-    if (isAuthenticated.value && !isAccessTokenValid.value) {
+    if (isAuthenticated.value && !hasValidAccessToken()) {
         try {
             await refreshAccessToken()
         } catch {
@@ -29,9 +30,19 @@ onMounted(async () => {
         }
     }
 
+    // Ověření session na serveru (lokálně platný token může server odmítnout, např. po změně JWT klíčů)
+    // a zároveň synchronizace nastavení (hlavně tématu). Při neplatné session apiFetch uživatele odhlásí,
+    // síťové chyby ignorujeme – téma je aplikované z localStorage.
+    if (isAuthenticated.value) {
+        await fetchFromApi().catch(() => {})
+    }
+
     // Po kontrole autentizace přesměruj podle stavu
-    if (isAuthenticated.value && window.location.pathname === '/') {
+    const path = window.location.pathname
+    if (isAuthenticated.value && path === '/') {
         await navigateTo('/app')
+    } else if (!isAuthenticated.value && path !== '/') {
+        await navigateTo('/')
     }
 
     authChecking.value = false

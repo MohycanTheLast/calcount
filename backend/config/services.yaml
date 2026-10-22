@@ -33,3 +33,4 @@ services:
     App\Security\AccessTokenProvider:
         arguments:
             $accessTokenTtlSeconds: '%lexik_jwt_authentication.token_ttl%'
+            $refreshTokenTtlSeconds: '%gesdinet_jwt_refresh_token.ttl%'

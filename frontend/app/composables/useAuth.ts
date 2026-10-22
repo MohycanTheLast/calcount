@@ -20,11 +20,13 @@ export const useAuth = () => {
 
     const refreshInFlight = useState<Promise<void> | null>('auth:refresh_in_flight', () => null)
 
-    const isAccessTokenValid = computed(() => {
+    // Záměrně funkce, ne computed – computed by si výsledek zapamatoval (Date.now() není reaktivní)
+    // a prošlý token by dál hlásil jako platný.
+    const hasValidAccessToken = () => {
         if (!accessToken.value) return false
         if (!expiresAtMs.value) return false
         return Date.now() < (expiresAtMs.value - 30_000)
-    })
+    }
 
     const isAuthenticated = computed(() => {
         // pro „přihlášený stav“ nám stačí, že máme refresh token
@@ -35,7 +37,14 @@ export const useAuth = () => {
     const loadFromStorage = () => {
         if (!import.meta.client) return
         const raw = localStorage.getItem('cc_auth')
-        if (!raw) return
+        if (!raw) {
+            // Paměť a storage se ukládají společně, chybějící záznam = odhlášení (např. v jiné záložce)
+            accessToken.value = null
+            refreshToken.value = null
+            expiresAtMs.value = null
+            user.value = null
+            return
+        }
         try {
             const parsed = JSON.parse(raw) as { session: AuthSession }
             const s = parsed.session
@@ -66,7 +75,13 @@ export const useAuth = () => {
         localStorage.setItem('cc_auth', JSON.stringify({ session }))
     }
 
-    watch([accessToken, refreshToken, expiresAtMs, user], persistToStorage, { deep: true })
+    const clearSession = () => {
+        accessToken.value = null
+        refreshToken.value = null
+        expiresAtMs.value = null
+        user.value = null
+        persistToStorage()
+    }
 
     const setTokensFromBackend = (payload: {
         access_token: string
@@ -78,6 +93,7 @@ export const useAuth = () => {
         refreshToken.value = payload.refresh_token
         expiresAtMs.value = Date.now() + payload.expires_in * 1000
         if (payload.user) user.value = payload.user
+        persistToStorage()
     }
 
     const signInWithEmail = async (email: string, password: string) => {
@@ -96,28 +112,45 @@ export const useAuth = () => {
         setTokensFromBackend(res)
     }
 
+    // Při odmítnutí refresh tokenu serverem session smaže; při síťové chybě ji nechá a jen vyhodí chybu.
+    // Volající pozná ukončenou session podle isAuthenticated.
     const refreshAccessToken = async () => {
-        if (!refreshToken.value) throw new Error('Missing refresh token')
-
         if (refreshInFlight.value) {
             await refreshInFlight.value
             return
         }
 
         refreshInFlight.value = (async () => {
-            const res = await $fetch<{
-                access_token: string
-                refresh_token: string
-                expires_in: number
-            }>('/api/token/refresh', {
-                method: 'POST',
-                body: { refresh_token: refreshToken.value },
-            })
+            // Refresh token je jednorázový – jiná záložka ho mohla mezitím vyměnit,
+            // proto nejdřív načteme aktuální stav ze storage.
+            const previousAccessToken = accessToken.value
+            loadFromStorage()
+            if (accessToken.value !== previousAccessToken && hasValidAccessToken()) return
 
-            setTokensFromBackend({
-                ...res,
-                refresh_token: res.refresh_token ?? refreshToken.value,
-            })
+            if (!refreshToken.value) throw new Error('Missing refresh token')
+
+            try {
+                const res = await $fetch<{
+                    access_token: string
+                    refresh_token: string
+                    expires_in: number
+                }>('/api/token/refresh', {
+                    method: 'POST',
+                    body: { refresh_token: refreshToken.value },
+                })
+
+                setTokensFromBackend({
+                    ...res,
+                    refresh_token: res.refresh_token ?? refreshToken.value,
+                })
+            } catch (e: any) {
+                // Session ukončíme při jakékoli odpovědi serveru (neplatný refresh token, chyba podpisu
+                // JWT po změně klíčů/passphrase apod.). Necháme ji jen při síťové chybě (bez statusu)
+                // a při dočasné nedostupnosti serveru (502–504), kdy má smysl to zkusit znovu.
+                const status = e?.status
+                if (status && ![502, 503, 504].includes(status)) clearSession()
+                throw e
+            }
         })()
 
         try {
@@ -128,7 +161,7 @@ export const useAuth = () => {
     }
 
     const getValidAccessToken = async () => {
-        if (isAccessTokenValid.value) return accessToken.value
+        if (hasValidAccessToken()) return accessToken.value
         await refreshAccessToken()
         return accessToken.value
     }
@@ -147,10 +180,7 @@ export const useAuth = () => {
         } catch {
             // záměrně ignorujeme – i když invalidate selže, chceme uživatele lokálně odhlásit
         } finally {
-            accessToken.value = null
-            refreshToken.value = null
-            expiresAtMs.value = null
-            user.value = null
+            clearSession()
             await navigateTo('/')
         }
     }
@@ -161,7 +191,7 @@ export const useAuth = () => {
         refreshToken,
         expiresAtMs,
         isAuthenticated,
-        isAccessTokenValid,
+        hasValidAccessToken,
         loadFromStorage,
         signInWithEmail,
         refreshAccessToken,

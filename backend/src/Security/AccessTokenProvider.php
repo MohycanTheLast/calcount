@@ -13,6 +13,7 @@ class AccessTokenProvider
 {
     public function __construct(
         protected int $accessTokenTtlSeconds,
+        protected int $refreshTokenTtlSeconds,
         protected JWTTokenManagerInterface $jwtManager,
         protected RefreshTokenGeneratorInterface $refreshTokenManager,
         protected RefreshTokenManagerInterface $refreshTokenDbManager
@@ -24,8 +25,8 @@ class AccessTokenProvider
         // Access token (JWT)
         $accessToken = $this->jwtManager->create($user);
 
-        // Refresh token
-        $refreshToken = $this->refreshTokenManager->createForUserWithTtl($user, 900);
+        // Refresh token – stejná platnost jako při rotaci v /api/token/refresh (gesdinet_jwt_refresh_token.ttl)
+        $refreshToken = $this->refreshTokenManager->createForUserWithTtl($user, $this->refreshTokenTtlSeconds);
 
         $this->refreshTokenDbManager->save($refreshToken);
 

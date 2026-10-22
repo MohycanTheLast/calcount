@@ -6,7 +6,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
         return navigateTo(to.path.slice(0, -1), { replace: true })
     }
 
-    const { isAuthenticated, loadFromStorage, isAccessTokenValid, refreshAccessToken } = useAuth()
+    const { isAuthenticated, loadFromStorage, hasValidAccessToken, refreshAccessToken } = useAuth()
     loadFromStorage()
 
     if (!isAuthenticated.value) {
@@ -14,12 +14,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
 
     // Volitelné: když je access token neplatný, zkus ho potichu obnovit
-    if (!isAccessTokenValid.value) {
+    if (!hasValidAccessToken()) {
         try {
             await refreshAccessToken()
         } catch {
-            // refresh selhal -> odhlásit a poslat na login
-            return navigateTo('/')
+            // Na login jen když server session ukončil; při síťové chybě necháme uživatele v aplikaci
+            if (!isAuthenticated.value) return navigateTo('/')
         }
     }
 })
