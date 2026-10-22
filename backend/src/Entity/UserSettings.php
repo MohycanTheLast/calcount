@@ -29,7 +29,7 @@ class UserSettings
     protected bool $saveWeight = false;
 
     #[ORM\Column(type: "string", nullable: false)]
-    protected string $themeMode = "auto";
+    protected string $themeMode = "system";
 
     #[ORM\Column(type: "string", nullable: false)]
     protected string $aiCommentMode = "none";

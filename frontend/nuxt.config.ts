@@ -33,7 +33,14 @@ export default defineNuxtConfig({
 
                 { name: 'theme-color', media: '(prefers-color-scheme: light)', content: '#ffffff' },
                 { name: 'theme-color', media: '(prefers-color-scheme: dark)', content: '#0b1220' }
-            ]
+            ],
+            script: [
+                // Aplikuje uložené téma ještě před načtením JS, aby při startu neproblikla světlá verze.
+                // Stejná logika jako applyTheme() v useUserSettings.
+                {
+                    innerHTML: "try{var m=localStorage.getItem('cc_theme');if(m==='dark'||(m!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}",
+                },
+            ],
         }
     },
 });

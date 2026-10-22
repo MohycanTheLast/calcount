@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* dark: varianty se řídí třídou .dark na <html> (nastavení uživatele), ne jen tématem OS */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* iOS / mobile „app feel“ */
 @layer base {
     html, body, #__nuxt {

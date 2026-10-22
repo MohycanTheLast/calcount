@@ -25,11 +25,38 @@ const DEFAULT_SETTINGS: UserSettings = {
     saveWeight: false,
 }
 
+const THEME_STORAGE_KEY = 'cc_theme'
+const THEME_MODES: ThemeMode[] = ['system', 'light', 'dark']
+
+const normalizeThemeMode = (value: unknown): ThemeMode =>
+    THEME_MODES.includes(value as ThemeMode) ? value as ThemeMode : 'system'
+
 export const useUserSettings = () => {
     const settings = useState<UserSettings>('user:settings', () => ({ ...DEFAULT_SETTINGS }))
     const loading = useState<boolean>('user:settings:loading', () => false)
     const saving = useState<boolean>('user:settings:saving', () => false)
     const error = useState<string | null>('user:settings:error', () => null)
+
+    const { apiFetch } = useApiFetch()
+
+    // Téma se drží i v localStorage, aby se po načtení stránky aplikovalo hned, ještě před odpovědí API
+    const loadThemeFromStorage = () => {
+        if (!import.meta.client) return
+        try {
+            settings.value.themeMode = normalizeThemeMode(localStorage.getItem(THEME_STORAGE_KEY))
+        } catch {
+            // storage nemusí být dostupné (private mode)
+        }
+    }
+
+    const persistTheme = () => {
+        if (!import.meta.client) return
+        try {
+            localStorage.setItem(THEME_STORAGE_KEY, settings.value.themeMode)
+        } catch {
+            // storage nemusí být dostupné (private mode)
+        }
+    }
 
     const applyTheme = () => {
         if (!import.meta.client) return
@@ -45,36 +72,18 @@ export const useUserSettings = () => {
         root.classList.toggle('dark', effective === 'dark')
     }
 
-    // Reaguj na změny OS tématu, ale jen když je zvolený "system"
-    if (import.meta.client) {
-        const mql = window.matchMedia('(prefers-color-scheme: dark)')
-        const onChange = () => {
-            if (settings.value.themeMode === 'system') applyTheme()
-        }
-
-        mql.addEventListener?.('change', onChange)
-        onBeforeUnmount(() => {
-            mql.removeEventListener?.('change', onChange)
-        })
-    }
-
     const fetchFromApi = async () => {
-        const { getValidAccessToken } = useAuth()
         loading.value = true
         error.value = null
 
         try {
-            const token = await getValidAccessToken()
-
-            const res = await $fetch<Partial<UserSettings>>('/api/user/settings', {
+            const res = await apiFetch<Partial<UserSettings>>('/api/user/settings', {
                 method: 'GET',
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
             })
 
-            settings.value = { ...DEFAULT_SETTINGS, ...res }
+            settings.value = { ...DEFAULT_SETTINGS, ...res, themeMode: normalizeThemeMode(res.themeMode) }
             applyTheme()
+            persistTheme()
         } catch (e) {
             error.value = 'Nepodařilo se načíst nastavení.'
             // necháme defaulty (nebo poslední stav v paměti)
@@ -86,28 +95,23 @@ export const useUserSettings = () => {
     }
 
     const saveToApi = async () => {
-        const { getValidAccessToken } = useAuth()
         saving.value = true
         error.value = null
 
         try {
-            const token = await getValidAccessToken()
-
             const payload: UserSettings = {
                 ...settings.value,
                 saveWeight: settings.value.saveWeight,
                 weightKg: settings.value.saveWeight ? settings.value.weightKg : null,
             }
 
-            await $fetch('/api/user/settings', {
+            await apiFetch('/api/user/settings', {
                 method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
                 body: payload,
             })
 
             applyTheme()
+            persistTheme()
         } catch (e) {
             error.value = 'Nepodařilo se uložit nastavení.'
             throw e
@@ -116,16 +120,12 @@ export const useUserSettings = () => {
         }
     }
 
-    watch(
-        () => settings.value.themeMode,
-        () => applyTheme()
-    )
-
     return {
         settings,
         loading,
         saving,
         error,
+        loadThemeFromStorage,
         applyTheme,
         fetchFromApi,
         saveToApi,
