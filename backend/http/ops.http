@@ -1,0 +1,17 @@
+# Provozní volání serveru (PhpStorm HTTP Client).
+#
+# Proměnné:
+#   host     – http-client.env.json (v gitu)
+#   opsToken – http-client.private.env.json (NENÍ v gitu, vytvoř ručně), např.:
+#              { "prod": { "opsToken": "<stejná hodnota jako OPS_TOKEN na serveru>" } }
+#
+# Na serveru musí být nastavená env proměnná OPS_TOKEN (min. 32 znaků),
+# vygenerovat: php -r "echo bin2hex(random_bytes(32));"
+
+### Smazání cache (proběhne na serveru až po odeslání odpovědi, vrací 202)
+POST {{host}}/ops/cache-clear
+X-Ops-Token: {{opsToken}}
+
+### Protokol posledního mazání cache
+GET {{host}}/ops/cache-clear
+X-Ops-Token: {{opsToken}}

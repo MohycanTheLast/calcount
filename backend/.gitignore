@@ -12,6 +12,9 @@
 .vscode/
 *.iml
 
+# HTTP Client – tokeny pro ops endpointy
+/http/http-client.private.env.json
+
 ###> lexik/jwt-authentication-bundle ###
 /config/jwt/*.pem
 ###< lexik/jwt-authentication-bundle ###
