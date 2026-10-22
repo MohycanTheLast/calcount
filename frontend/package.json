@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
+    "postbuild": "node scripts/copy-to-www-root.mjs",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
+    "postgenerate": "node scripts/copy-to-www-root.mjs",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare"
   },
