@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+/* iOS / mobile „app feel“ */
+@layer base {
+    html, body, #__nuxt {
+        height: 100%;
+    }
+
+    html {
+        -webkit-text-size-adjust: 100%;
+        text-rendering: optimizeLegibility;
+    }
+
+    body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        -webkit-tap-highlight-color: transparent;
+        overscroll-behavior-y: none;
+    }
+}
+
+/* Safe-area utilitky (notch + home indicator) */
+@layer utilities {
+    .pt-safe { padding-top: env(safe-area-inset-top); }
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+    .px-safe { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+    .scroll-ios { -webkit-overflow-scrolling: touch; }
+}
+
+/* ===== CalCount: iOS Health design tokens ===== */
+@layer base {
+    :root {
+        --cc-bg: 248 250 252;
+        --cc-surface: 255 255 255;
+        --cc-text: 15 23 42;
+        --cc-muted: 100 116 139;
+        --cc-border: 226 232 240;
+
+        --cc-accent: 16 185 129;
+        --cc-accent-strong: 5 150 105;
+
+        --cc-radius: 24px;
+        --cc-radius-sm: 16px;
+        --cc-shadow: 0 10px 30px rgba(2, 6, 23, 0.08);
+    }
+
+    html.dark {
+        --cc-bg: 2 6 23;
+        --cc-surface: 15 23 42;
+        --cc-text: 248 250 252;
+        --cc-muted: 148 163 184;
+        --cc-border: 51 65 85;
+
+        --cc-accent: 52 211 153;
+        --cc-accent-strong: 16 185 129;
+
+        --cc-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+    }
+
+    body {
+        background: rgb(var(--cc-bg));
+        color: rgb(var(--cc-text));
+    }
+}
+
+/* ===== Reusable UI primitives (Health-like) ===== */
+@layer components {
+    .cc-page {
+        @apply min-h-screen;
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .cc-container {
+        @apply mx-auto w-full max-w-md px-4;
+    }
+
+    .cc-nav {
+        @apply sticky top-0 z-40;
+        padding-top: env(safe-area-inset-top);
+        background: color-mix(in srgb, rgb(var(--cc-bg)) 72%, transparent);
+        border-bottom: 1px solid rgb(var(--cc-border));
+        backdrop-filter: blur(10px);
+    }
+
+    .cc-card {
+        @apply border;
+        border-color: rgb(var(--cc-border));
+        background: rgb(var(--cc-surface));
+        border-radius: var(--cc-radius);
+        box-shadow: var(--cc-shadow);
+    }
+
+    .cc-card-pad {
+        @apply p-5;
+    }
+
+    .cc-title {
+        @apply text-xl font-semibold tracking-tight;
+    }
+
+    .cc-subtle {
+        color: rgb(var(--cc-muted));
+    }
+
+    .cc-input {
+        @apply w-full outline-none border;
+        border-color: rgb(var(--cc-border));
+        background: color-mix(in srgb, rgb(var(--cc-surface)) 92%, transparent);
+        border-radius: var(--cc-radius-sm);
+        padding: 12px 14px;
+    }
+
+    .cc-input:focus {
+        border-color: rgb(var(--cc-accent));
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.18);
+    }
+
+    .cc-btn {
+        @apply inline-flex items-center justify-center font-medium select-none transition;
+        border-radius: 9999px;
+        padding: 12px 16px;
+    }
+
+    .cc-btn-primary {
+        @apply inline-flex items-center justify-center font-medium select-none transition text-white;
+        border-radius: 9999px;
+        padding: 12px 16px;
+        background: rgb(var(--cc-accent-strong));
+    }
+
+    .cc-btn-primary:active {
+        transform: scale(0.99);
+    }
+
+    .cc-link {
+        @apply text-sm font-medium underline-offset-4 hover:underline;
+        color: rgb(var(--cc-accent-strong));
+    }
+
+    /* --- nové: „box radio“ pro volby vzhledu --- */
+    .cc-option-grid {
+        @apply grid grid-cols-3 gap-3;
+    }
+
+    .cc-option {
+        @apply w-full text-left border transition select-none;
+        border-color: rgb(var(--cc-border));
+        background: color-mix(in srgb, rgb(var(--cc-surface)) 92%, transparent);
+        border-radius: var(--cc-radius-sm);
+        padding: 12px 12px;
+    }
+
+    .cc-option:active {
+        transform: scale(0.99);
+    }
+
+    .cc-option--selected {
+        border-color: rgb(var(--cc-accent-strong));
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.18);
+    }
+
+    .cc-option-title {
+        @apply text-sm font-semibold tracking-tight;
+    }
+
+    .cc-option-desc {
+        @apply text-xs mt-1;
+        color: rgb(var(--cc-muted));
+    }
+}

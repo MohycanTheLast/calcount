@@ -1,0 +1,5 @@
+﻿.idea
+calcount.iml
+backend/www-root/_nuxt
+backend/www-root/index.html
+*.local.txt

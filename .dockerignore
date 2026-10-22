@@ -1,0 +1,16 @@
+.git
+.idea
+.claude
+**/.claude
+
+# lokální tajné hodnoty a klíče – v produkci se dodávají přes prostředí / mount
+**/.env.local
+**/.env.*.local
+**/.env.local.php
+backend/config/jwt/*.pem
+
+backend/var/
+backend/vendor/
+frontend/node_modules/
+frontend/.nuxt/
+frontend/.output/

@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(**/.env.local)", "Read(**/.env.*.local)", "Read(**/.env.local.php)",
+      "Read(**/*.pem)", "Read(**/*.key)", "Read(**/*.p12)", "Read(**/*.pfx)",
+      "Read(backend/config/jwt/**)", "Read(backend/config/secrets/**)", "Read(.idea/**)",
+      "Edit(**/.env*)", "Edit(**/*.pem)", "Edit(backend/config/jwt/**)",
+
+      "Bash(*env.local*)", "Bash(*.pem*)", "Bash(*config/jwt*)", "Bash(*config/secrets*)",
+      "Bash(*debug:dotenv*)", "Bash(*--env-vars*)", "Bash(*secrets:reveal*)", "Bash(*secrets:list*)",
+      "Bash(*dbal:run-sql*)", "Bash(*doctrine:query*)", "Bash(*doctrine:schema:update*)",
+      "Bash(*doctrine:database:drop*)", "Bash(*doctrine:fixtures:load*)",
+      "Bash(mysql*)", "Bash(*mysqldump*)", "Bash(docker exec*)", "Bash(docker compose exec*)",
+      "Bash(docker inspect*)", "Bash(docker compose config*)",
+      "Bash(printenv*)", "Bash(env)", "Bash(git log -p*)", "Bash(git show*)",
+
+      "PowerShell(*env.local*)", "PowerShell(*.pem*)", "PowerShell(*config\\jwt*)",
+      "PowerShell(*Env:*)", "PowerShell(*debug:dotenv*)", "PowerShell(*secrets:*)",
+      "PowerShell(mysql*)", "PowerShell(docker*)"
+    ],
+    "ask": ["Bash(git push*)", "Bash(curl*)", "Bash(wget*)", "WebFetch"]
+  }
+}

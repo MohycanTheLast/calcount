@@ -1,0 +1,39 @@
+# Nastavení výchozího souboru, upřednostňuje index.html před index.php
+DirectoryIndex index.html index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Forward Authorization header to PHP (needed for Bearer JWT in some Apache setups)
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Určíme základní adresář automaticky
+    RewriteCond %{REQUEST_URI}::$0 ^(/.+)/(.*)::\2$
+    RewriteRule .* - [E=BASE:%1]
+
+    # Přesměrování požadavku na index.html, pokud existuje
+    RewriteCond %{REQUEST_URI} ^/?$
+    RewriteCond %{DOCUMENT_ROOT}/index.html -f
+    RewriteRule ^ index.html [L]
+
+    # Přesměrování bez /index.php k prevenci duplicíty
+    RewriteCond %{ENV:REDIRECT_STATUS} =""
+    RewriteRule ^index\.php(?:/(.*)|$) %{ENV:BASE}/$1 [R=301,L]
+
+    # SPA fallback pro Nuxt (aplikace je pod /app a /settings)
+    # Pokud existuje index.html v docrootu, přesměruj SPA routy na něj.
+    RewriteCond %{DOCUMENT_ROOT}/index.html -f
+    RewriteRule ^(app|settings)(/.*)?$ index.html [L]
+
+    # Pokud soubor neexistuje, přesměruj na index.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ %{ENV:BASE}/index.php [L]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    <IfModule mod_alias.c>
+        # Dočasné přesměrování na index.php, pokud mod_rewrite není dostupný
+        RedirectMatch 307 ^/$ /index.php/
+    </IfModule>
+</IfModule>
