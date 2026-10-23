@@ -3,8 +3,8 @@ import { useDiaryApi } from '~/api/diary'
 import type { DayEntry, EntryValues } from '~/api/types'
 import { addDays, formatIsoDate } from '~/utils/dates'
 
-// Počet denních karet v Deníku (včetně dneška)
-export const RECENT_DAYS = 14
+// Počet denních karet v Deníku (včetně dneška); starší dny jsou v kalendáři
+export const RECENT_DAYS = 7
 
 // Klíče cache: invalidace prefixu ['diary'] obnoví po změně záznamu Deník, detail dne i budoucí kalendář/statistiky
 export const diaryKeys = {

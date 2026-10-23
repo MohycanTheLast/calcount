@@ -37,6 +37,12 @@ const toCard = (day: DaySummary): DayCard => {
 // Backend vrací každý den v rozsahu vzestupně – poslední karta je dnešek
 const dayCards = computed<DayCard[]>(() => (days.value ?? []).map(toCard));
 
+// Měsíc dne před nejstarší kartou – tam vede odkaz „Starší dny v kalendáři“
+const olderDaysMonth = computed(() => {
+    const oldest = dayCards.value[0];
+    return oldest ? formatMonthParam(addDays(oldest.date, -1)) : null;
+});
+
 const scrollToTodayCard = async () => {
     await nextTick();
     const scroller = scrollerEl.value;
@@ -82,6 +88,18 @@ watch(days, (value, previous) => {
             class="overflow-x-auto scroll-ios -mx-4 px-4 py-2 flex gap-3 snap-x snap-mandatory"
             style="scrollbar-width: none;"
         >
+            <!-- Za nejstarší kartou (vlevo) proklik do kalendáře na měsíc předchozího dne -->
+            <NuxtLink
+                v-if="olderDaysMonth"
+                :to="`/calendar?m=${olderDaysMonth}`"
+                class="cc-card cc-card-pad w-[40%] shrink-0 snap-center flex flex-col items-center justify-center gap-2 text-center transition active:scale-[0.99]"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" style="color: rgb(var(--cc-accent));" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h1V3a1 1 0 0 1 1-1Zm13 8H4v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9ZM8 13a1.25 1.25 0 1 1 0 2.5A1.25 1.25 0 0 1 8 13Zm4 0a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5Zm4 0a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5Z"/>
+                </svg>
+                <span class="cc-link no-underline">‹ Starší dny v kalendáři</span>
+            </NuxtLink>
+
             <section
                 v-for="(card, index) in dayCards"
                 :key="card.isoDate"

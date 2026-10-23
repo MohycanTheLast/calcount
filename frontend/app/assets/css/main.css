@@ -276,6 +276,42 @@
         @apply text-sm font-medium;
         color: rgb(239 68 68);
     }
+
+    /* --- den v kalendáři (barvy stejné jako štítky Deficit/Přebytek v Deníku) --- */
+    .cc-day {
+        @apply relative aspect-square w-full rounded-xl flex flex-col items-center justify-center gap-0.5 text-sm font-medium select-none transition;
+    }
+
+    button.cc-day:active {
+        transform: scale(0.95);
+    }
+
+    .cc-day--deficit {
+        color: rgb(var(--cc-accent));
+        background: color-mix(in srgb, rgb(var(--cc-accent)) 20%, transparent);
+    }
+
+    .cc-day--surplus {
+        color: rgb(245 158 11);
+        background: color-mix(in srgb, rgb(245 158 11) 20%, transparent);
+    }
+
+    .cc-day--today {
+        box-shadow: inset 0 0 0 2px rgb(var(--cc-accent));
+    }
+
+    .cc-day--future {
+        opacity: 0.35;
+    }
+
+    .cc-day-dot {
+        @apply inline-block w-1.5 h-1.5 rounded-full;
+        background: rgb(var(--cc-muted));
+    }
+
+    .cc-day-swatch {
+        @apply inline-block w-3.5 h-3.5 rounded;
+    }
 }
 
 /* Nápověda ke klávesnici jen pro zařízení s myší/klávesnicí */

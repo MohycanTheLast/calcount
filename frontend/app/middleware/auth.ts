@@ -2,8 +2,9 @@ import {useAuth} from "~/composables/useAuth";
 
 export default defineNuxtRouteMiddleware(async (to) => {
     // nechceme měnit root "/"
+    // (Apache k adresářům z buildu lomítko přidává, např. /calendar → /calendar/) – query a hash zachovat
     if (to.path !== '/' && to.path.endsWith('/')) {
-        return navigateTo(to.path.slice(0, -1), { replace: true })
+        return navigateTo({ path: to.path.slice(0, -1), query: to.query, hash: to.hash }, { replace: true })
     }
 
     const { isAuthenticated, loadFromStorage, hasValidAccessToken, refreshAccessToken } = useAuth()

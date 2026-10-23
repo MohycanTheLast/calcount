@@ -23,7 +23,8 @@ pages/        tenké stránky – skládají komponenty, nastavují meta (layout
 layouts/      tabs.vue (hlavní obrazovky se spodním tab barem), default.vue (bez tab baru)
 components/   sdílené UI: AppTabBar (seznam záložek), DaySummary, AlertMessage
 features/     funkce po složkách: diary/ (denní karty, zadávání, poslední záznam, řádek dne, queries.ts),
-              settings/ (výpočet BMR); později calendar/, stats/, integrations/
+              calendar/ (měsíční mřížka, buňka dne, queries.ts), settings/ (výpočet BMR);
+              později stats/, integrations/
 api/          typované volání backendu (diary, settings, auth) + types.ts se všemi typy odpovědí
 composables/  useAuth (session), useApiFetch (token + obnova), useUserSettings (nastavení, téma),
               useCamera, useSpeechToText
@@ -38,7 +39,9 @@ middleware/   auth (přihlášení), transition.global (směr přechodu detail �
   i budoucí kalendář a statistiky. Při odhlášení se celá cache maže.
 - **Komponenty se auto-importují** i z `features/` (nastaveno v `nuxt.config.ts`), composables a api
   se importují explicitně.
-- **Nová záložka** = položka v seznamu v `AppTabBar.vue` + stránka s `definePageMeta({ layout: 'tabs' })`.
+- **Záložky:** Deník (posledních 7 dní, za nejstarší kartou odkaz do kalendáře), Kalendář (měsíc v URL `?m=YYYY-MM`,
+  barvy dnů podle bilance), Nastavení. Nová záložka = položka v seznamu v `AppTabBar.vue` + stránka
+  s `definePageMeta({ layout: 'tabs' })` + název routy v SPA přesměrování v `backend/www-root/.htaccess`.
 - **Přechody stránek** běží v režimu `out-in`. Stránka musí mít v `app.vue` i v layoutu vlastní obalový
   element – jinak Vue při současné změně okolí (tab bar) vloží novou stránku na špatné místo nebo spadne
   na `insertBefore`.
