@@ -17,6 +17,17 @@ class OpenAiClient
 {
     const API_URL = 'https://api.openai.com/v1/responses';
 
+    // Odhad z textu i rozpoznání fotky. gpt-6-luna je oficiální náhrada za gpt-4.1-mini a gpt-4o-mini
+    // (ty OpenAI vypíná 14. 1. 2027) a vyjde zhruba 8× levněji – viz docs/ai-models.md.
+    const MODEL = 'gpt-6-luna';
+
+    // Bez uvažování (výchozí je „medium“) – úkol je jednoduchý a tokeny uvažování se účtují jako výstup
+    const REASONING_EFFORT = 'none';
+
+    // Detail obrázku vždy výslovně: u nových modelů znamená „auto“ plné rozlišení (fotka z iPhonu ~14 000 tokenů),
+    // „high“ zmenší fotku na max. 2 500 políček 32×32 px (~3 000 tokenů)
+    const IMAGE_DETAIL = 'high';
+
     public function __construct(
         protected HttpClientInterface $httpClient,
         protected Security $security,
@@ -31,35 +42,26 @@ class OpenAiClient
      */
     public function analyzeImage(string $base64Image, string $mimeType): string
     {
-        $options = [
-            'auth_bearer' => $this->openAiApiKey,
-            'headers' => [
-                'Content-Type: application/json',
-            ],
-            'body' => json_encode([
-                'model' => 'gpt-4o-mini',
-                'input' => [
-                    [
-                        'role' => 'user',
-                        'content' => [
-                            [
-                                'type' => 'input_image',
-                                'image_url' => "data:{$mimeType};base64,{$base64Image}",
-                            ],
-                            [
-                                'type' => 'input_text',
-                                'text' => 'Co vidíš na fotce za jídlo nebo pití? Odpověz stručně česky – vypiš jen název jídla/nápoje a přibližné množství, jako by sis to chtěl zapsat do kalorického deníčku. Např: "Svíčková s 5 knedlíky, pivo 0.5 l"',
-                            ],
+        return $this->requestOutputText([
+            'model' => self::MODEL,
+            'reasoning' => ['effort' => self::REASONING_EFFORT],
+            'input' => [
+                [
+                    'role' => 'user',
+                    'content' => [
+                        [
+                            'type' => 'input_image',
+                            'image_url' => "data:{$mimeType};base64,{$base64Image}",
+                            'detail' => self::IMAGE_DETAIL,
+                        ],
+                        [
+                            'type' => 'input_text',
+                            'text' => 'Co vidíš na fotce za jídlo nebo pití? Odpověz stručně česky – vypiš jen název jídla/nápoje a přibližné množství, jako by sis to chtěl zapsat do kalorického deníčku. Např: "Svíčková s 5 knedlíky, pivo 0.5 l"',
                         ],
                     ],
                 ],
-            ]),
-        ];
-
-        $result = $this->httpClient->request('POST', self::API_URL, $options);
-        $output = $result->toArray(false);
-
-        return $output['output'][0]['content'][0]['text'] ?? '';
+            ],
+        ]);
     }
 
     /**
@@ -106,40 +108,27 @@ class OpenAiClient
             $required[] = "comment";
         }
 
-        $aiOptions = [
-            'auth_bearer' => $this->openAiApiKey,
-            'headers' => [
-                'Content-Type: application/json',
+        $json = $this->requestOutputText([
+            'model' => self::MODEL,
+            'reasoning' => ['effort' => self::REASONING_EFFORT],
+            'input' => [
+                ['role' => 'system', 'content' => $prompt],
+                ['role' => 'user', 'content' => $text],
             ],
-            'body' => json_encode([
-                'model' => 'gpt-4.1-mini',
-                'input' => [
-                    ['role' => 'system', 'content' => $prompt],
-                    ['role' => 'user', 'content' => $text],
-                ],
-                'text' => [
-                    'format' => [
-                        'type' => 'json_schema',
-                        'name' => 'ai_output_dto',
-                        'schema' => [
-                            'type' => 'object',
-                            'properties' => $jsonProperties,
-                            'required' => $required,
-                            "additionalProperties" => false
-                        ],
-                        'strict' => true
-                    ]
+            'text' => [
+                'format' => [
+                    'type' => 'json_schema',
+                    'name' => 'ai_output_dto',
+                    'schema' => [
+                        'type' => 'object',
+                        'properties' => $jsonProperties,
+                        'required' => $required,
+                        "additionalProperties" => false
+                    ],
+                    'strict' => true
                 ]
-            ])
-        ];
-
-        $aiResult = $this->httpClient->request("POST", self::API_URL, $aiOptions);
-
-        $aiOutput = $aiResult->toArray(false);
-
-        // TODO errors
-
-        $json = $aiOutput['output'][0]['content'][0]['text'] ?? '{"kcal":0,"waterInMl":0}';
+            ]
+        ]);
 
         $serializer = new Serializer(
             [new ObjectNormalizer()],
@@ -147,5 +136,50 @@ class OpenAiClient
         );
 
         return $serializer->deserialize($json, DietRecord::class, 'json');
+    }
+
+    /**
+     * Zavolá Responses API a vrátí text odpovědi modelu.
+     *
+     * Chyba API nebo prázdná odpověď vyhodí výjimku (ApiController ji zaloguje a uživateli vrátí obecnou hlášku)
+     * – dřív se při chybě tiše uložil záznam s 0 kcal.
+     *
+     * @throws \RuntimeException
+     */
+    private function requestOutputText(array $body): string
+    {
+        $response = $this->httpClient->request('POST', self::API_URL, [
+            'auth_bearer' => $this->openAiApiKey,
+            'headers' => [
+                'Content-Type: application/json',
+            ],
+            'body' => json_encode($body),
+        ]);
+
+        $status = $response->getStatusCode();
+        $data = $response->toArray(false);
+
+        if ($status >= 400) {
+            throw new \RuntimeException(sprintf('OpenAI API error %d: %s', $status, $data['error']['message'] ?? 'unknown'));
+        }
+
+        // Odpověď je pole položek; u modelů s uvažováním může před zprávou být položka „reasoning“
+        foreach ($data['output'] ?? [] as $item) {
+            if (($item['type'] ?? null) !== 'message') {
+                continue;
+            }
+
+            foreach ($item['content'] ?? [] as $content) {
+                if (($content['type'] ?? null) === 'output_text' && ($content['text'] ?? '') !== '') {
+                    return $content['text'];
+                }
+            }
+        }
+
+        throw new \RuntimeException(sprintf(
+            'OpenAI API returned no text (status: %s, incomplete reason: %s)',
+            $data['status'] ?? 'unknown',
+            $data['incomplete_details']['reason'] ?? '-'
+        ));
     }
 }
