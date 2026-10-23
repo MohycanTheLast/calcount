@@ -1,13 +1,28 @@
 import { getApiBase } from '~/api/client'
-import type { AuthTokens } from '~/api/types'
+import type { AuthTokens, RegisterResult } from '~/api/types'
 
-// Volání bez přístupového tokenu – používá je jen useAuth (přihlášení, obnova a zneplatnění session).
+// Volání bez přístupového tokenu – přihlášení, registrace, obnova a zneplatnění session.
 export const authApi = {
     login: (email: string, password: string) =>
         $fetch<AuthTokens>('/api/login', {
             baseURL: getApiBase(),
             method: 'POST',
             body: { email, password },
+        }),
+
+    register: (email: string, password: string, termsAccepted: boolean) =>
+        $fetch<RegisterResult>('/api/register', {
+            baseURL: getApiBase(),
+            method: 'POST',
+            body: { email, password, termsAccepted },
+        }),
+
+    // Parametry z odkazu v registračním e-mailu
+    verifyEmail: (params: { uid: string; expires: string; signature: string }) =>
+        $fetch<{ status: 'verified' }>('/api/register/verify', {
+            baseURL: getApiBase(),
+            method: 'POST',
+            body: params,
         }),
 
     refresh: (refreshToken: string) =>

@@ -3,8 +3,8 @@
 ## Zavedená opatření
 
 ### Přístup a vlastnictví dat
-- Celé `/api` vyžaduje přihlášení (`security.yaml`); veřejné jsou jen login, refresh/invalidate tokenu
-  a přihlášení přes Google/Apple.
+- Celé `/api` vyžaduje přihlášení (`security.yaml`); veřejné jsou jen login, registrace (a potvrzení e-mailu),
+  refresh/invalidate tokenu a přihlášení přes Google/Apple.
 - Záznam smí upravit nebo smazat jen jeho vlastník (`DietDiaryVoter`). Cizí záznam vrací **404**, ne 403,
   aby nešlo zjistit jeho existenci. Úprava nemění vlastníka.
 - Data pro souhrny (`/api/days`, detail dne) se vždy filtrují podle přihlášeného uživatele.
@@ -19,6 +19,20 @@
   – jinak by šlo převzít cizí účet. Bez nastaveného client ID je endpoint vypnutý (404).
 - Session na frontendu se ukončí při jakékoli odmítavé odpovědi serveru na refresh (kromě 502–504);
   síťová chyba uživatele neodhlásí.
+
+### Registrace (`RegistrationController`)
+- E-mail se ukládá oříznutý a malými písmeny, heslo 8–4096 znaků, povinný souhlas s podmínkami – ukládá se
+  čas a verze podmínek (`terms_accepted_at`, `terms_version`), aby šel souhlas doložit (GDPR, zdravotní data).
+- **Max. 5 registrací z jedné IP za hodinu** (`RegistrationThrottler`) – každý účet má vlastní denní limit AI.
+- **Ověření e-mailu odkazem je připravené, ale vypnuté** (`EMAIL_VERIFICATION_ENABLED`, výchozí `0`, `EmailVerifier`):
+  - odkaz je podepsaný HMAC (APP_SECRET) z id, e-mailu a expirace (48 h) – bez tokenu v DB,
+  - se zapnutým ověřením neaktivovaný účet dostane při přihlášení 403 (až po ověření hesla) a registrace na
+    existující e-mail odpoví stejně jako úspěšná (nejde zjistit, kdo má účet). Bez ověření vrací 409,
+  - **před zapnutím** doplnit odesílání e-mailu v `EmailVerifier::sendVerificationEmail()` (symfony/mailer)
+    a nastavit `DEFAULT_URI` na veřejnou adresu aplikace.
+- Dokud ověření neběží, mohl by někdo založit účet na cizí e-mail. Když se pak skutečný vlastník přihlásí
+  přes Google/Apple (ověřený e-mail), účet se mu propojí, **heslo neověřeného účtu se zruší** a e-mail se označí
+  jako ověřený – útočník tak k účtu nezůstane mít přístup.
 
 ### Náklady na AI a vstupy
 - **Denní limit volání OpenAI na uživatele** (`AiUsageLimiter`, env `AI_DAILY_LIMIT`, výchozí 50) pro
@@ -50,5 +64,7 @@
 - Access i refresh token jsou v `localStorage` – při XSS by šly ukrást. CSP riziko výrazně snižuje.
   Přesun refresh tokenu do httpOnly cookie se rozhodne spolu s nativní aplikací (cookies se v Capacitoru
   chovají jinak).
-- Před otevřením registrace veřejnosti: GDPR (zdravotní data – smazání účtu, export dat, zásady ochrany
-  osobních údajů).
+- GDPR: podmínky užívání a zásady ochrany osobních údajů jsou na `/terms` (souhlas při registraci). Před
+  otevřením registrace veřejnosti **doplnit údaje provozovatele** v `pages/terms.vue` (`OPERATOR`). Smazání
+  účtu a export dat zatím jen na žádost e-mailem – samoobslužně v aplikaci chybí.
+- Přihlášení přes Google/Apple zakládá účet bez souhlasu s podmínkami – před zapnutím doplnit souhlas.

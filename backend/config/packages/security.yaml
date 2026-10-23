@@ -44,7 +44,7 @@ security:
     access_control:
             - { path: ^/api, roles: PUBLIC_ACCESS, methods: [ OPTIONS ] }
             # token/invalidate volá frontend při odhlášení bez Authorization hlavičky
-            - { path: ^/api/(login|token/refresh|token/invalidate|auth/(apple|google))$, roles: PUBLIC_ACCESS }
+            - { path: ^/api/(login|register|register/verify|token/refresh|token/invalidate|auth/(apple|google))$, roles: PUBLIC_ACCESS }
             - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }

@@ -9,6 +9,7 @@
 parameters:
     # Výchozí hodnoty volitelných env proměnných (lze přepsat v .env.local / na serveru)
     env(AI_DAILY_LIMIT): '50'
+    env(EMAIL_VERIFICATION_ENABLED): '0'
 
 services:
     # default configuration for services in *this* file
@@ -49,3 +50,10 @@ services:
     App\Service\AiUsageLimiter:
         arguments:
             $dailyLimit: '%env(int:AI_DAILY_LIMIT)%'
+
+    # Ověření e-mailu po registraci – zatím vypnuté, chybí odesílání e-mailů (viz EmailVerifier)
+    App\Security\EmailVerifier:
+        arguments:
+            $enabled: '%env(bool:EMAIL_VERIFICATION_ENABLED)%'
+            $appUrl: '%env(DEFAULT_URI)%'
+            $secret: '%kernel.secret%'

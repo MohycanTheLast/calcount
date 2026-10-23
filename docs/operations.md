@@ -15,6 +15,9 @@
    FTP složku `var/cache/prod` – při dalším requestu se sestaví znovu.
 6. Ověřit, že odpověď stránky obsahuje hlavičku `Content-Security-Policy` (= hosting má `mod_headers`).
 
+**Ověření e-mailu při registraci** se zapíná `EMAIL_VERIFICATION_ENABLED=1` v `.env.local` – až po doplnění
+odesílání e-mailů a nastavení `DEFAULT_URI` (viz security.md, Registrace).
+
 Na produkci musí být `APP_ENV=prod` (s `dev` uniká v chybových odpovědích třída a text výjimek).
 Pokud server používá `.env.local.php` (`composer dump-env prod`), změny v `.env.local` se neprojeví,
 dokud se soubor nepřegeneruje nebo nesmaže.

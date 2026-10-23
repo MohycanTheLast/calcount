@@ -148,6 +148,33 @@
         color: rgb(var(--cc-accent-strong));
     }
 
+    .cc-checkbox {
+        @apply mt-0.5 w-5 h-5 shrink-0 cursor-pointer;
+        accent-color: rgb(var(--cc-accent-strong));
+    }
+
+    /* --- dlouhý text (podmínky užívání) --- */
+    .cc-prose {
+        @apply text-sm leading-relaxed space-y-3;
+    }
+
+    .cc-prose h2 {
+        @apply text-base font-semibold tracking-tight pt-3;
+    }
+
+    .cc-prose h3 {
+        @apply text-sm font-semibold pt-1;
+    }
+
+    .cc-prose ul {
+        @apply list-disc pl-5 space-y-1.5;
+    }
+
+    .cc-prose a {
+        @apply underline underline-offset-4;
+        color: rgb(var(--cc-accent-strong));
+    }
+
     /* --- nové: „box radio“ pro volby vzhledu --- */
     .cc-option-grid {
         @apply grid grid-cols-3 gap-3;

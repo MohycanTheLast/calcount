@@ -8,6 +8,7 @@ use App\Repository\UserIdentityRepository;
 use App\Repository\UserRepository;
 use App\Security\AccessTokenProvider;
 use App\Security\AppleIdTokenVerifier;
+use App\Security\EmailVerifier;
 use App\Security\GoogleIdTokenVerifier;
 use App\Security\InvalidIdTokenException;
 use App\Security\LoginThrottler;
@@ -31,6 +32,7 @@ class SecurityController extends AbstractController
         protected EntityManagerInterface $entityManager,
         protected LoggerInterface $logger,
         protected LoginThrottler $loginThrottler,
+        protected EmailVerifier $emailVerifier,
     )
     {
     }
@@ -70,6 +72,14 @@ class SecurityController extends AbstractController
         }
 
         $this->loginThrottler->reset($email, $ip);
+
+        // Až po ověření hesla – jinak by šlo zjistit, že účet existuje
+        if ($this->emailVerifier->isEnabled() && !$user->isEmailVerified()) {
+            return $this->json(
+                ['error' => 'Účet ještě není aktivovaný. Klikni na odkaz v e-mailu, který jsme ti poslali.'],
+                Response::HTTP_FORBIDDEN
+            );
+        }
 
         return $this->json($this->accessTokenProvider->get($user));
     }
@@ -125,7 +135,14 @@ class SecurityController extends AbstractController
             return $this->json(['error' => 'Unverified email'], Response::HTTP_UNAUTHORIZED);
         }
 
-        $user = $this->userRepository->findOneBy(['email' => $email]) ?? (new User())->setEmail($email);
+        $user = $this->userRepository->findOneBy(['email' => $email]);
+        if ($user !== null && !$user->isEmailVerified()) {
+            // Heslo k účtu nastavil někdo, kdo vlastnictví e-mailu neprokázal (registrace bez ověření) – mohl to
+            // být i útočník, který účet na cizí e-mail založil dopředu. Vlastník e-mailu se prokázal teď, heslo rušíme.
+            $user->setPassword(null);
+        }
+        $user ??= (new User())->setEmail($email);
+        $user->markEmailVerified();
         $user->linkIdentity($provider, $claims['sub'], $email);
 
         $this->entityManager->persist($user);

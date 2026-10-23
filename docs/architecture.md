@@ -39,6 +39,9 @@ middleware/   auth (přihlášení), transition.global (směr přechodu detail �
   i budoucí kalendář a statistiky. Při odhlášení se celá cache maže.
 - **Komponenty se auto-importují** i z `features/` (nastaveno v `nuxt.config.ts`), composables a api
   se importují explicitně.
+- **Stránky bez přihlášení:** `/` (přihlášení), `/register`, `/terms` (podmínky užívání a GDPR),
+  `/verify-email` (cíl odkazu z registračního e-mailu) – seznam `PUBLIC_PATHS` v `app.vue` a SPA přesměrování
+  v `backend/www-root/.htaccess`.
 - **Záložky:** Deník (posledních 7 dní, za nejstarší kartou odkaz do kalendáře), Kalendář (měsíc v URL `?m=YYYY-MM`,
   barvy dnů podle bilance), Nastavení. Nová záložka = položka v seznamu v `AppTabBar.vue` + stránka
   s `definePageMeta({ layout: 'tabs' })` + název routy v SPA přesměrování v `backend/www-root/.htaccess`.
@@ -61,7 +64,7 @@ middleware/   auth (přihlášení), transition.global (směr přechodu detail �
 
 | Tabulka | Účel |
 |---|---|
-| `user` | účet; `password` může být prázdné u účtu jen přes externí přihlášení |
+| `user` | účet; `password` může být prázdné u účtu jen přes externí přihlášení; `created_at`, `email_verified_at`, souhlas s podmínkami (`terms_accepted_at`, `terms_version`) |
 | `user_identity` | propojené externí účty (provider + `sub`), víc na uživatele |
 | `user_settings` | 1:1 s uživatelem – BMR, průměrná aktivita, téma, režim komentáře AI, `activity_source` |
 | `diet_record` | záznam jídla/pití: text, kcal, voda (ml), **`entry_date`** (den, ke kterému patří) |
@@ -95,6 +98,7 @@ Počítá `DaySummaryService` – jediné místo, kde se počítá výdej a bila
 | Endpoint | Popis |
 |---|---|
 | `POST /api/login`, `/api/token/refresh`, `/api/token/invalidate` | heslo, obnova a zneplatnění session |
+| `POST /api/register`, `/api/register/verify` | registrace e-mailem a heslem, potvrzení e-mailu odkazem (zatím vypnuté) |
 | `POST /api/auth/google`, `/api/auth/apple` | přihlášení/registrace přes ID token (bez client ID vypnuté) |
 | `POST /api/calculate` | nový záznam z textu (AI odhad), uloží se k dnešnímu dni |
 | `POST /api/save/{id}`, `/api/delete/{id}` | úprava / smazání záznamu (jen vlastník) |

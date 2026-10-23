@@ -67,6 +67,11 @@
                     </form>
 
                     <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
+
+                    <p class="text-center text-sm cc-subtle pt-2">
+                        Nemáš účet?
+                        <NuxtLink to="/register" class="cc-link">Zaregistruj se</NuxtLink>
+                    </p>
                 </div>
             </div>
         </main>
@@ -88,8 +93,8 @@ const onEmailLogin = async () => {
         await signInWithEmail(email.value, password.value)
         await navigateTo('/app')
     } catch (e: any) {
-        // 429 = příliš mnoho neúspěšných pokusů – server vrací hlášku, kdy to zkusit znovu
-        error.value = e?.status === 429 && e?.data?.error ? e.data.error : 'Přihlášení se nepodařilo.'
+        // 429 = příliš mnoho neúspěšných pokusů, 403 = neaktivovaný účet – server vrací srozumitelnou hlášku
+        error.value = [403, 429].includes(e?.status) && e?.data?.error ? e.data.error : 'Přihlášení se nepodařilo.'
     } finally {
         loading.value = false
     }

@@ -129,6 +129,9 @@
                 <h2 class="cc-section-title">Účet</h2>
 
                 <div class="cc-list">
+                    <NuxtLink to="/terms" class="cc-list-row block w-full text-left text-base">
+                        Podmínky užívání a ochrana osobních údajů
+                    </NuxtLink>
                     <button type="button" class="cc-list-row w-full text-left cc-btn-danger-text text-base" @click="onLogout">
                         Odhlásit se
                     </button>

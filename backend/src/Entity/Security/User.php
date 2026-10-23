@@ -45,9 +45,29 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?string $password = null;
 
+    // null u účtů založených před zavedením registrace
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    /**
+     * Kdy uživatel prokázal, že mu e-mail patří (odkaz z e-mailu, nebo e-mail ověřený u Google/Apple).
+     * null = neověřeno – účet z registrace, dokud je ověření e-mailem vypnuté.
+     */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $emailVerifiedAt = null;
+
+    // Souhlas s podmínkami užívání a zpracováním osobních údajů (GDPR – musíme umět doložit, s čím a kdy)
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $termsAcceptedAt = null;
+
+    // Verze podmínek = datum jejich účinnosti (RegistrationController::TERMS_VERSION)
+    #[ORM\Column(length: 20, nullable: true)]
+    private ?string $termsVersion = null;
+
     public function __construct()
     {
         $this->identities = new ArrayCollection();
+        $this->createdAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -107,7 +127,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->password;
     }
 
-    public function setPassword(string $password): static
+    public function setPassword(?string $password): static
     {
         $this->password = $password;
 
@@ -170,5 +190,45 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->identities->add($identity);
 
         return $identity;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function isEmailVerified(): bool
+    {
+        return $this->emailVerifiedAt !== null;
+    }
+
+    public function getEmailVerifiedAt(): ?\DateTimeImmutable
+    {
+        return $this->emailVerifiedAt;
+    }
+
+    public function markEmailVerified(): static
+    {
+        $this->emailVerifiedAt ??= new \DateTimeImmutable();
+
+        return $this;
+    }
+
+    public function getTermsAcceptedAt(): ?\DateTimeImmutable
+    {
+        return $this->termsAcceptedAt;
+    }
+
+    public function getTermsVersion(): ?string
+    {
+        return $this->termsVersion;
+    }
+
+    public function acceptTerms(string $version): static
+    {
+        $this->termsAcceptedAt = new \DateTimeImmutable();
+        $this->termsVersion = $version;
+
+        return $this;
     }
 }

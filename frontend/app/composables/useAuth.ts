@@ -110,6 +110,14 @@ export const useAuth = () => {
         setTokensFromBackend(await authApi.login(email, password))
     }
 
+    // Když server účet rovnou aktivuje (ověření e-mailem vypnuté), uživatele i přihlásí.
+    // Při 'verification_pending' přihlášený není – čeká na odkaz z e-mailu.
+    const registerWithEmail = async (email: string, password: string, termsAccepted: boolean) => {
+        const { status } = await authApi.register(email, password, termsAccepted)
+        if (status === 'registered') await signInWithEmail(email, password)
+        return status
+    }
+
     // Při odmítnutí refresh tokenu serverem session smaže; při síťové chybě ji nechá a jen vyhodí chybu.
     // Volající pozná ukončenou session podle isAuthenticated.
     const refreshAccessToken = async () => {
@@ -182,6 +190,7 @@ export const useAuth = () => {
         hasValidAccessToken,
         loadFromStorage,
         signInWithEmail,
+        registerWithEmail,
         refreshAccessToken,
         getValidAccessToken,
         signOut,

@@ -25,6 +25,9 @@ const { isAuthenticated, loadFromStorage, hasValidAccessToken, refreshAccessToke
 const { fetchFromApi } = useUserSettings()
 const authChecking = ref(true)
 
+// Stránky dostupné bez přihlášení: přihlášení, registrace, podmínky užívání, potvrzení e-mailu
+const PUBLIC_PATHS = ['/', '/register', '/terms', '/verify-email']
+
 // Nejdéle tak dlouho čekáme na server, než aplikaci ukážeme (pomalá síť / zaseknutý request)
 const AUTH_CHECK_TIMEOUT_MS = 6000
 
@@ -48,10 +51,11 @@ onMounted(async () => {
         }
 
         // Po kontrole autentizace přesměruj podle stavu
-        const path = window.location.pathname
-        if (isAuthenticated.value && path === '/') {
+        // (Apache k adresářům z buildu přidává lomítko, např. /register → /register/)
+        const path = window.location.pathname.replace(/(.)\/$/, '$1')
+        if (isAuthenticated.value && (path === '/' || path === '/register')) {
             await navigateTo('/app')
-        } else if (!isAuthenticated.value && path !== '/') {
+        } else if (!isAuthenticated.value && !PUBLIC_PATHS.includes(path)) {
             await navigateTo('/')
         }
     } catch (e) {

@@ -68,3 +68,8 @@ export type AuthTokens = {
     refresh_token: string
     expires_in: number
 }
+
+// POST /api/register – registered = lze se rovnou přihlásit, verification_pending = čeká na odkaz z e-mailu
+export type RegisterResult = {
+    status: 'registered' | 'verification_pending'
+}

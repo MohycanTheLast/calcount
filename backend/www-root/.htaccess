@@ -35,10 +35,11 @@ DirectoryIndex index.html index.php
     RewriteCond %{ENV:REDIRECT_STATUS} =""
     RewriteRule ^index\.php(?:/(.*)|$) %{ENV:BASE}/$1 [R=301,L]
 
-    # SPA fallback pro Nuxt (aplikace je pod /app, /calendar, /settings a /day/<datum>)
+    # SPA fallback pro Nuxt (aplikace je pod /app, /calendar, /settings a /day/<datum>;
+    # bez přihlášení /register, /terms a /verify-email)
     # Pokud existuje index.html v docrootu, přesměruj SPA routy na něj.
     RewriteCond %{DOCUMENT_ROOT}/index.html -f
-    RewriteRule ^(app|calendar|settings|day)(/.*)?$ index.html [L]
+    RewriteRule ^(app|calendar|settings|day|register|terms|verify-email)(/.*)?$ index.html [L]
 
     # Pokud soubor neexistuje, přesměruj na index.php
     RewriteCond %{REQUEST_FILENAME} !-f
