@@ -32,6 +32,7 @@ class DietDiaryService
             ->setContent($text)
             ->setKcal((int) round($record->kcal))
             ->setWaterInMl((int) round($record->waterInMl))
+            ->setEntryDate(new \DateTimeImmutable('today'))
             ->setCreatedAt(new \DateTime())
             ->setUser($this->getLoggedUser())
         ;
@@ -64,6 +65,8 @@ class DietDiaryService
     }
 
     /**
+     * Původní formát pro /api/entries (frontend do refaktoru). Nové obrazovky mají používat /api/days.
+     *
      * @return DietDiaryEntryDay[]
      */
     public function getAllEntries(): array
@@ -71,23 +74,15 @@ class DietDiaryService
         /** @var DietDiaryRepository $dietDiaryRepo */
         $dietDiaryRepo = $this->entityManager->getRepository(DietDiary::class);
 
-        // Načtení agregovaných hodnot pro DietDiary
-        $dietDiaryEntries = $dietDiaryRepo->getAggregatedEntriesByDay($this->getLoggedUser());
-
-        // Zapsaný výdej (tabulka Burned) se nepoužívá: nemá vazbu na uživatele, takže by se sčítal výdej
-        // všech uživatelů. Nahradí ho výdej podle zdroje (backlog F3), do té doby kcalBurned = 0.
-
-        // Vytvoření pole DietDiaryEntry
         $entries = [];
 
-        foreach ($dietDiaryEntries as $entry) {
-            $date = $entry['entryDate'];
-
+        foreach ($dietDiaryRepo->getAggregatedEntriesByDay($this->getLoggedUser()) as $date => $totals) {
             $entries[] = new DietDiaryEntryDay(
-                date: (new \DateTime($date))->format('d.m.Y'),
-                kcal: $entry['totalKcal'],
+                date: (new \DateTimeImmutable($date))->format('d.m.Y'),
+                kcal: $totals['kcal'],
+                // Výdej je v /api/days (BMR + aktivní kalorie podle zdroje)
                 kcalBurned: 0,
-                water: round($entry['totalWater'] / 1000, 2) // Voda v litrech
+                water: round($totals['waterMl'] / 1000, 2) // Voda v litrech
             );
         }
 

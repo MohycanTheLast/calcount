@@ -8,6 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: DietDiaryRepository::class)]
 #[ORM\Table(name: "diet_record")]
+#[ORM\Index(name: "IDX_DIET_RECORD_USER_DATE", columns: ["user_id", "entry_date"])]
 class DietDiary
 {
     #[ORM\Id]
@@ -27,6 +28,11 @@ class DietDiary
 
     #[ORM\Column(type: "integer", nullable: false)]
     protected int $waterInMl;
+
+    // Den, ke kterému záznam patří (místní datum uživatele). Oddělené od created_at, aby šlo zapisovat
+    // i zpětně a deník/kalendář nezávisel na časové zóně serveru.
+    #[ORM\Column(name: "entry_date", type: "date_immutable", nullable: false)]
+    protected \DateTimeImmutable $entryDate;
 
     #[ORM\Column(name: "update_at", type: "datetime", nullable: true)]
     protected \DateTimeInterface $updatedAt;
@@ -75,6 +81,17 @@ class DietDiary
     public function setWaterInMl(int $waterInMl): DietDiary
     {
         $this->waterInMl = $waterInMl;
+        return $this;
+    }
+
+    public function getEntryDate(): \DateTimeImmutable
+    {
+        return $this->entryDate;
+    }
+
+    public function setEntryDate(\DateTimeImmutable $entryDate): DietDiary
+    {
+        $this->entryDate = $entryDate->setTime(0, 0);
         return $this;
     }
 

@@ -42,6 +42,14 @@ class UsersController extends AbstractController
             $userSettings->setWeightKg($requestData['weightKg']);
             $userSettings->setSaveWeight($requestData['saveWeight'] === true);
 
+            // Volitelné (frontend ho zatím neposílá) – zdroj aktivních kalorií
+            if (isset($requestData['activitySource'])) {
+                if (!in_array($requestData['activitySource'], UserSettings::ACTIVITY_SOURCES, true)) {
+                    return new JsonResponse(['error' => 'Unknown activitySource'], Response::HTTP_BAD_REQUEST);
+                }
+                $userSettings->setActivitySource($requestData['activitySource']);
+            }
+
             $entityManager->persist($userSettings);
             $entityManager->flush();
 

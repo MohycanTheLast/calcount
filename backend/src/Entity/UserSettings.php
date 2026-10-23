@@ -37,6 +37,20 @@ class UserSettings
     #[ORM\Column(type: "integer", nullable: true)]
     protected ?int $weightKg = null;
 
+    /**
+     * Odkud brát aktivní kalorie dne (viz DaySummaryService):
+     * static = průměrná denní aktivita (avgDailyActivityKcal), synced = jen synchronizovaná data (Health, Strava…),
+     * synced_or_static = synchronizovaná data, a pokud za den chybí, průměrná aktivita.
+     * Ruční zápis za konkrétní den (zdroj „manual“) má vždy přednost.
+     */
+    public const ACTIVITY_SOURCE_STATIC = 'static';
+    public const ACTIVITY_SOURCE_SYNCED = 'synced';
+    public const ACTIVITY_SOURCE_SYNCED_OR_STATIC = 'synced_or_static';
+    public const ACTIVITY_SOURCES = [self::ACTIVITY_SOURCE_STATIC, self::ACTIVITY_SOURCE_SYNCED, self::ACTIVITY_SOURCE_SYNCED_OR_STATIC];
+
+    #[ORM\Column(length: 20, nullable: false, options: ['default' => self::ACTIVITY_SOURCE_STATIC])]
+    protected string $activitySource = self::ACTIVITY_SOURCE_STATIC;
+
     #[ORM\Column(name: "update_at", type: "datetime", nullable: true)]
     protected \DateTimeInterface $updatedAt;
 
@@ -46,6 +60,21 @@ class UserSettings
     public function getId(): int
     {
         return $this->id;
+    }
+
+    public function getActivitySource(): string
+    {
+        return $this->activitySource;
+    }
+
+    public function setActivitySource(string $activitySource): UserSettings
+    {
+        if (!in_array($activitySource, self::ACTIVITY_SOURCES, true)) {
+            throw new \InvalidArgumentException(sprintf('Unknown activity source "%s"', $activitySource));
+        }
+
+        $this->activitySource = $activitySource;
+        return $this;
     }
 
     public function setId(int $id): UserSettings
