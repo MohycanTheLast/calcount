@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { useDiaryApi } from '~/api/diary'
 import type { DayEntry, EntryValues } from '~/api/types'
-import { addDays, formatIsoDate } from '~/utils/diaryDates'
+import { addDays, formatIsoDate } from '~/utils/dates'
 
 // Počet denních karet v Deníku (včetně dneška)
 export const RECENT_DAYS = 14
