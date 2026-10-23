@@ -151,6 +151,9 @@
                 <h2 class="cc-section-title">Účet</h2>
 
                 <div class="cc-list">
+                    <button type="button" class="cc-list-row block w-full text-left text-base" @click="replayOnboarding">
+                        Průvodce aplikací
+                    </button>
                     <NuxtLink to="/terms" class="cc-list-row block w-full text-left text-base">
                         Podmínky užívání a ochrana osobních údajů
                     </NuxtLink>
@@ -167,6 +170,7 @@
 
 <script setup lang="ts">
 import { useDiaryMutations } from "~/features/diary/queries";
+import { useOnboarding } from "~/features/onboarding/useOnboarding";
 
 definePageMeta({
     middleware: ['auth'],
@@ -176,6 +180,7 @@ definePageMeta({
 const { settings, loaded, loading, saving, error, fetchFromApi, saveToApi } = useUserSettings()
 const { signOut } = useAuth()
 const { invalidateDiary } = useDiaryMutations()
+const { replay: replayOnboarding } = useOnboarding()
 
 const showBmrCalc = ref(false)
 

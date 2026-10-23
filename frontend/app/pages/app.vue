@@ -30,6 +30,9 @@
                 </Transition>
             </section>
         </main>
+
+        <!-- Uvítání po prvním přihlášení a průvodce po Deníku -->
+        <OnboardingTour />
     </div>
 </template>
 

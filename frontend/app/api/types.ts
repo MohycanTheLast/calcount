@@ -88,3 +88,11 @@ export type CreatedPersonalAccessToken = PersonalAccessToken & {
     token: string
     activitySource: ActivitySource
 }
+
+// GET /api/user/me
+export type CurrentUser = {
+    id: number
+    user_identifier: string // e-mail
+    roles: string[]
+    onboardingCompleted: boolean // false = při otevření Deníku se ukáže úvodní průvodce
+}

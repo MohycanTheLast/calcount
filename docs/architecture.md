@@ -24,12 +24,12 @@ layouts/      tabs.vue (hlavní obrazovky se spodním tab barem), default.vue (b
 components/   sdílené UI: AppTabBar (seznam záložek), DaySummary, AlertMessage
 features/     funkce po složkách: diary/ (denní karty, zadávání, poslední záznam, řádek dne, výdej dne,
               queries.ts), calendar/ (měsíční mřížka, buňka dne, queries.ts), settings/ (výpočet BMR),
-              integrations/ (osobní tokeny – queries.ts); později stats/
+              integrations/ (osobní tokeny – queries.ts), onboarding/ (uvítání a průvodce); později stats/
 api/          typované volání backendu (diary, settings, auth, activity) + types.ts se všemi typy odpovědí
 composables/  useAuth (session), useApiFetch (token + obnova), useUserSettings (nastavení, téma),
               useCamera, useSpeechToText
 lib/          storage.ts – úložiště zařízení (session, téma) za rozhraním
-utils/        čisté funkce: dates (veškerá práce s daty), balance, bmr, format, theme, activity – testované Vitestem
+utils/        čisté funkce: dates (veškerá práce s daty), balance, bmr, format, theme, activity, tour – testované Vitestem
 plugins/      vue-query (cache dat ze serveru), theme.client (téma při startu)
 middleware/   auth (přihlášení), transition.global (směr přechodu detail ↔ seznam)
 ```
@@ -46,6 +46,10 @@ middleware/   auth (přihlášení), transition.global (směr přechodu detail �
   barvy dnů podle bilance), Nastavení. Nová záložka = položka v seznamu v `AppTabBar.vue` + stránka
   s `definePageMeta({ layout: 'tabs' })` + název routy v SPA přesměrování v `backend/www-root/.htaccess`.
   Podstránky nastavení jsou v `pages/settings/` (např. `/settings/apple-health` – tokeny a návod pro Zkratky).
+- **Úvodní průvodce** (`features/onboarding`): nový účet (`/api/user/me` → `onboardingCompleted: false`) uvidí
+  v Deníku uvítání a pak průvodce – zvýrazní prvky s atributem `data-tour` (kroky v `steps.ts`, krok bez prvku
+  na stránce se vynechá). Dokončení i přeskočení se uloží na server (`POST /api/user/onboarding`), znovu ho jde
+  spustit v Nastavení → Účet. Nový prvek do průvodce = atribut `data-tour` + krok v `steps.ts`.
 - **Aktivní kalorie:** zdroj se volí v Nastavení (`activitySource`), konkrétní den jde ručně upravit v detailu dne
   (`DayExpenditureCard`). Ikona u výdeje v `DaySummary` ukazuje Apple Zdraví (hodinky) nebo ruční úpravu (tužka).
 - **Přechody stránek** běží v režimu `out-in`. Stránka musí mít v `app.vue` i v layoutu vlastní obalový
@@ -67,7 +71,7 @@ middleware/   auth (přihlášení), transition.global (směr přechodu detail �
 
 | Tabulka | Účel |
 |---|---|
-| `user` | účet; `password` může být prázdné u účtu jen přes externí přihlášení; `created_at`, `email_verified_at`, souhlas s podmínkami (`terms_accepted_at`, `terms_version`) |
+| `user` | účet; `password` může být prázdné u účtu jen přes externí přihlášení; `created_at`, `email_verified_at`, souhlas s podmínkami (`terms_accepted_at`, `terms_version`), `onboarding_completed_at` |
 | `user_identity` | propojené externí účty (provider + `sub`), víc na uživatele |
 | `user_settings` | 1:1 s uživatelem – BMR, průměrná aktivita, téma, režim komentáře AI, `activity_source` |
 | `diet_record` | záznam jídla/pití: text, kcal, voda (ml), **`entry_date`** (den, ke kterému patří) |
@@ -111,5 +115,6 @@ Počítá `DaySummaryService` – jediné místo, kde se počítá výdej a bila
 | `POST /api/save/{id}`, `/api/delete/{id}` | úprava / smazání záznamu (jen vlastník) |
 | `GET /api/diary-day/{YYYY-MM-DD}` | záznamy dne |
 | `POST /api/upload` | rozpoznání jídla na fotce (nic neukládá) |
-| `GET/POST /api/user/settings`, `GET /api/user/me` | nastavení, přihlášený uživatel |
+| `GET/POST /api/user/settings`, `GET /api/user/me` | nastavení, přihlášený uživatel (vč. `onboardingCompleted`) |
+| `POST /api/user/onboarding` | úvodní průvodce dokončený/přeskočený |
 | `POST/GET /ops/cache-clear` | smazání cache na serveru (token v hlavičce, viz operations.md) |

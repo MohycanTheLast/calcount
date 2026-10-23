@@ -23,7 +23,23 @@ class UsersController extends AbstractController
             'id' => method_exists($user, 'getId') ? $user->getId() : null,
             'user_identifier' => $user->getUserIdentifier(),
             'roles' => $user->getRoles(),
+            'onboardingCompleted' => $user->isOnboardingCompleted(),
         ]);
+    }
+
+    /**
+     * Uživatel dokončil nebo přeskočil úvodního průvodce – při dalším přihlášení se už nezobrazí.
+     */
+    #[Route('/api/user/onboarding', name: 'api_user_onboarding', methods: ['POST'])]
+    public function completeOnboarding(EntityManagerInterface $entityManager): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $user->completeOnboarding();
+        $entityManager->flush();
+
+        return new JsonResponse(status: Response::HTTP_NO_CONTENT);
     }
 
     #[Route('/api/user/settings', name: 'api_user_settings', methods: ['GET', 'POST'])]

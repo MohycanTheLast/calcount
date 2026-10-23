@@ -91,6 +91,7 @@ export const useAuth = () => {
         // Téma zůstává – patří zařízení a je uložené v localStorage.
         useNuxtApp().$queryClient.clear()
         useState('user:settings:loaded').value = false
+        useState('onboarding:phase').value = 'idle'
     }
 
     const setTokensFromBackend = (payload: {

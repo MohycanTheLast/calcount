@@ -64,6 +64,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $termsVersion = null;
 
+    // Kdy uživatel dokončil (nebo přeskočil) úvodního průvodce aplikací; null = při příštím otevření ho uvidí
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $onboardingCompletedAt = null;
+
     public function __construct()
     {
         $this->identities = new ArrayCollection();
@@ -228,6 +232,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->termsAcceptedAt = new \DateTimeImmutable();
         $this->termsVersion = $version;
+
+        return $this;
+    }
+
+    public function isOnboardingCompleted(): bool
+    {
+        return $this->onboardingCompletedAt !== null;
+    }
+
+    public function completeOnboarding(): static
+    {
+        $this->onboardingCompletedAt ??= new \DateTimeImmutable();
 
         return $this;
     }

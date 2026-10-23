@@ -108,6 +108,7 @@ watch(days, (value, previous) => {
                 class="cc-card cc-card-pad w-[88%] shrink-0 snap-center transition active:scale-[0.99]"
                 :class="{ 'cursor-pointer': card.exists }"
                 :data-day-index="index"
+                :data-tour="index === dayCards.length - 1 ? 'today-card' : undefined"
                 :role="card.exists ? 'button' : undefined"
                 :tabindex="card.exists ? 0 : undefined"
                 @click="openDetail(card)"

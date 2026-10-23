@@ -28,7 +28,7 @@
             </button>
         </div>
 
-        <div class="relative">
+        <div class="relative" data-tour="entry-text">
             <textarea
                 v-model="text"
                 placeholder="Co jsi jedl nebo pil? Např. svíčková s 5 knedlíky, k tomu pivo"
@@ -44,6 +44,7 @@
                     style="color: rgb(var(--cc-accent));"
                     title="Diktovat hlasem"
                     aria-label="Diktovat hlasem"
+                    data-tour="entry-voice"
                     @click="start"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -71,6 +72,7 @@
                     :disabled="cameraLoading"
                     title="Vyfotit jídlo"
                     aria-label="Vyfotit jídlo"
+                    data-tour="entry-photo"
                     @click="handleOpenCamera"
                 >
                     <svg v-if="!cameraLoading" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

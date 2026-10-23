@@ -175,6 +175,54 @@
         color: rgb(var(--cc-accent-strong));
     }
 
+    /* --- úvodní průvodce (features/onboarding) --- */
+    .cc-tour-backdrop {
+        background: rgb(0 0 0 / 0.6);
+    }
+
+    /* Výřez kolem zvýrazněného prvku – zbytek obrazovky ztmaví obří stín */
+    .cc-tour-spotlight {
+        position: fixed;
+        pointer-events: none;
+        border-radius: var(--cc-radius-sm);
+        box-shadow: 0 0 0 9999px rgb(0 0 0 / 0.6);
+        outline: 2px solid rgb(var(--cc-accent));
+        transition: top 0.25s, left 0.25s, width 0.25s, height 0.25s;
+    }
+
+    .cc-tour-bubble {
+        position: fixed;
+        width: min(20rem, calc(100vw - 2rem));
+        padding: 16px;
+        background: rgb(var(--cc-surface));
+        border: 1px solid rgb(var(--cc-border));
+        border-radius: var(--cc-radius);
+        box-shadow: var(--cc-shadow);
+        transition: top 0.25s, left 0.25s;
+    }
+
+    .cc-tour-arrow {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        background: inherit;
+        border: inherit;
+        border-radius: 2px;
+        transform: translateX(-50%) rotate(45deg);
+    }
+
+    .cc-tour-arrow--below {
+        top: -7px;
+        border-right: 0;
+        border-bottom: 0;
+    }
+
+    .cc-tour-arrow--above {
+        bottom: -7px;
+        border-left: 0;
+        border-top: 0;
+    }
+
     /* --- nové: „box radio“ pro volby vzhledu --- */
     .cc-option-grid {
         @apply grid grid-cols-3 gap-3;
@@ -396,7 +444,9 @@
     .cc-push-leave-active,
     .cc-pop-enter-active,
     .cc-pop-leave-active,
-    .cc-pop-in-enter-active {
+    .cc-pop-in-enter-active,
+    .cc-tour-spotlight,
+    .cc-tour-bubble {
         transition: none;
     }
 }
