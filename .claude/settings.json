@@ -4,8 +4,7 @@
       "Read(**/.env.local)", "Read(**/.env.*.local)", "Read(**/.env.local.php)",
       "Read(**/*.pem)", "Read(**/*.key)", "Read(**/*.p12)", "Read(**/*.pfx)",
       "Read(backend/config/jwt/**)", "Read(backend/config/secrets/**)", "Read(.idea/**)",
-      "Edit(**/.env*)", "Edit(**/*.pem)", "Edit(backend/config/jwt/**)",
-
+      "Edit(**/*.pem)", "Edit(backend/config/jwt/**)",
       "Bash(*env.local*)", "Bash(*.pem*)", "Bash(*config/jwt*)", "Bash(*config/secrets*)",
       "Bash(*debug:dotenv*)", "Bash(*--env-vars*)", "Bash(*secrets:reveal*)", "Bash(*secrets:list*)",
       "Bash(*dbal:run-sql*)", "Bash(*doctrine:query*)", "Bash(*doctrine:schema:update*)",
