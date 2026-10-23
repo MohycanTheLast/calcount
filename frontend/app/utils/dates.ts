@@ -96,3 +96,6 @@ export const monthGrid = (month: Date): (Date | null)[][] => {
 
     return weeks
 }
+
+// Datum a čas česky, např. „24. 10. 2026 23:30“ (ISO řetězec ze serveru)
+export const formatDateTime = (iso: string) => format(new Date(iso), 'd. M. yyyy H:mm')

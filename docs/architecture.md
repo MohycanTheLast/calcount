@@ -22,14 +22,14 @@
 pages/        tenké stránky – skládají komponenty, nastavují meta (layout, middleware)
 layouts/      tabs.vue (hlavní obrazovky se spodním tab barem), default.vue (bez tab baru)
 components/   sdílené UI: AppTabBar (seznam záložek), DaySummary, AlertMessage
-features/     funkce po složkách: diary/ (denní karty, zadávání, poslední záznam, řádek dne, queries.ts),
-              calendar/ (měsíční mřížka, buňka dne, queries.ts), settings/ (výpočet BMR);
-              později stats/, integrations/
-api/          typované volání backendu (diary, settings, auth) + types.ts se všemi typy odpovědí
+features/     funkce po složkách: diary/ (denní karty, zadávání, poslední záznam, řádek dne, výdej dne,
+              queries.ts), calendar/ (měsíční mřížka, buňka dne, queries.ts), settings/ (výpočet BMR),
+              integrations/ (osobní tokeny – queries.ts); později stats/
+api/          typované volání backendu (diary, settings, auth, activity) + types.ts se všemi typy odpovědí
 composables/  useAuth (session), useApiFetch (token + obnova), useUserSettings (nastavení, téma),
               useCamera, useSpeechToText
 lib/          storage.ts – úložiště zařízení (session, téma) za rozhraním
-utils/        čisté funkce: dates (veškerá práce s daty), balance, bmr, format, theme – testované Vitestem
+utils/        čisté funkce: dates (veškerá práce s daty), balance, bmr, format, theme, activity – testované Vitestem
 plugins/      vue-query (cache dat ze serveru), theme.client (téma při startu)
 middleware/   auth (přihlášení), transition.global (směr přechodu detail ↔ seznam)
 ```
@@ -45,6 +45,9 @@ middleware/   auth (přihlášení), transition.global (směr přechodu detail �
 - **Záložky:** Deník (posledních 7 dní, za nejstarší kartou odkaz do kalendáře), Kalendář (měsíc v URL `?m=YYYY-MM`,
   barvy dnů podle bilance), Nastavení. Nová záložka = položka v seznamu v `AppTabBar.vue` + stránka
   s `definePageMeta({ layout: 'tabs' })` + název routy v SPA přesměrování v `backend/www-root/.htaccess`.
+  Podstránky nastavení jsou v `pages/settings/` (např. `/settings/apple-health` – tokeny a návod pro Zkratky).
+- **Aktivní kalorie:** zdroj se volí v Nastavení (`activitySource`), konkrétní den jde ručně upravit v detailu dne
+  (`DayExpenditureCard`). Ikona u výdeje v `DaySummary` ukazuje Apple Zdraví (hodinky) nebo ruční úpravu (tužka).
 - **Přechody stránek** běží v režimu `out-in`. Stránka musí mít v `app.vue` i v layoutu vlastní obalový
   element – jinak Vue při současné změně okolí (tab bar) vloží novou stránku na špatné místo nebo spadne
   na `insertBefore`.
@@ -70,6 +73,7 @@ middleware/   auth (přihlášení), transition.global (směr přechodu detail �
 | `diet_record` | záznam jídla/pití: text, kcal, voda (ml), **`entry_date`** (den, ke kterému patří) |
 | `activity_energy` | aktivní kalorie za den a zdroj (`manual`, `apple_health`, `strava`), unikátní (uživatel, den, zdroj) |
 | `refresh_tokens` | refresh tokeny (gesdinet) |
+| `personal_access_token` | osobní API tokeny pro iOS Zkratky – jen hash, scopes, poslední použití, odvolání |
 | `burned_record` | stará tabulka výdeje bez vazby na uživatele – nepoužívá se, ke smazání |
 
 - **`entry_date` je oddělené od `created_at`**, aby šlo zapisovat i zpětně a den nezávisel na časové zóně serveru.
@@ -99,6 +103,9 @@ Počítá `DaySummaryService` – jediné místo, kde se počítá výdej a bila
 |---|---|
 | `POST /api/login`, `/api/token/refresh`, `/api/token/invalidate` | heslo, obnova a zneplatnění session |
 | `POST /api/register`, `/api/register/verify` | registrace e-mailem a heslem, potvrzení e-mailu odkazem (zatím vypnuté) |
+| `POST /api/activity` | aktivní kalorie z Apple Zdraví (`{date, activeKcal}` nebo pole až 7 dní, max. 31 dní zpět), upsert; JWT nebo osobní token |
+| `PUT/DELETE /api/activity/manual/{YYYY-MM-DD}` | ruční úprava aktivních kalorií dne / její zrušení; vrací souhrn dne |
+| `GET/POST /api/tokens`, `DELETE /api/tokens/{id}` | osobní API tokeny (vytvoření vrátí plný token jen jednou; první token přepne `activitySource` na `synced_or_static`) |
 | `POST /api/auth/google`, `/api/auth/apple` | přihlášení/registrace přes ID token (bez client ID vypnuté) |
 | `POST /api/calculate` | nový záznam z textu (AI odhad), uloží se k dnešnímu dni |
 | `POST /api/save/{id}`, `/api/delete/{id}` | úprava / smazání záznamu (jen vlastník) |

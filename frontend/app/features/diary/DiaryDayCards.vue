@@ -18,6 +18,7 @@ type DayCard = {
     water: number; // litry
     expenditureKcal: number | null;
     missingBmr: boolean;
+    activeSource: DaySummary["activeSource"];
 };
 
 const toCard = (day: DaySummary): DayCard => {
@@ -31,6 +32,7 @@ const toCard = (day: DaySummary): DayCard => {
         water: day.waterMl / 1000,
         expenditureKcal: day.expenditureKcal,
         missingBmr: day.bmrKcal === null,
+        activeSource: day.activeSource,
     };
 };
 
@@ -123,6 +125,7 @@ watch(days, (value, previous) => {
                     :kcal="card.kcal"
                     :water-liters="card.water"
                     :expenditure-kcal="card.expenditureKcal"
+                    :active-source="card.activeSource"
                 >
                     <template #no-expenditure>
                         <NuxtLink

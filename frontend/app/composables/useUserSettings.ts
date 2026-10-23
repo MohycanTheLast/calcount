@@ -12,6 +12,7 @@ const DEFAULT_SETTINGS: UserSettings = {
     aiCommentMode: 'none',
     weightKg: null,
     saveWeight: false,
+    activitySource: 'static',
 }
 
 const THEME_STORAGE_KEY = 'cc_theme'

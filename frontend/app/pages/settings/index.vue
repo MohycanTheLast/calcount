@@ -62,9 +62,31 @@
                         />
                     </label>
 
+                    <label class="block">
+                        <div class="text-sm cc-subtle mb-1">Aktivní kalorie dne</div>
+                        <select v-model="settings.activitySource" class="cc-input">
+                            <option value="static">Vždy průměrná denní aktivita</option>
+                            <option value="synced_or_static">Z Apple Zdraví, jinak průměr</option>
+                            <option value="synced">Jen z Apple Zdraví</option>
+                        </select>
+                    </label>
+
                     <p class="text-xs cc-subtle">
                         Denní výdej = BMR + aktivita. Z něj se v Deníku počítá kalorický deficit.
+                        Aktivitu konkrétního dne můžeš upravit v jeho detailu.
                     </p>
+                </div>
+            </section>
+
+            <!-- PROPOJENÍ -->
+            <section>
+                <h2 class="cc-section-title">Propojení</h2>
+
+                <div class="cc-list">
+                    <NuxtLink to="/settings/apple-health" class="cc-list-row flex items-center justify-between gap-3 text-base">
+                        <span>Apple Zdraví <span class="cc-subtle text-sm">(přes Zkratky)</span></span>
+                        <span class="cc-subtle" aria-hidden="true">›</span>
+                    </NuxtLink>
                 </div>
             </section>
 

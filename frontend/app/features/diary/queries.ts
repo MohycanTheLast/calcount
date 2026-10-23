@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { useActivityApi } from '~/api/activity'
 import { useDiaryApi } from '~/api/diary'
-import type { DayEntry, EntryValues } from '~/api/types'
+import type { DayEntry, DaySummary, EntryValues } from '~/api/types'
 import { addDays, formatIsoDate } from '~/utils/dates'
 
 // Počet denních karet v Deníku (včetně dneška); starší dny jsou v kalendáři
@@ -79,4 +80,28 @@ export const useDiaryMutations = () => {
     })
 
     return { createEntry, updateEntry, deleteEntry, invalidateDiary }
+}
+
+// Ruční úprava aktivních kalorií dne – mění výdej a bilanci, proto se obnoví celý deník (i kalendář)
+export const useActiveKcalMutations = () => {
+    const activityApi = useActivityApi()
+    const queryClient = useQueryClient()
+
+    // Souhrn dne ze serveru se ukáže hned, zbytek (týden v Deníku, měsíc v kalendáři) se obnoví
+    const applySummary = (summary: DaySummary) => {
+        queryClient.setQueryData(diaryKeys.days(summary.date, summary.date), summary)
+        return queryClient.invalidateQueries({ queryKey: diaryKeys.all })
+    }
+
+    const setManual = useMutation({
+        mutationFn: ({ date, activeKcal }: { date: string; activeKcal: number }) => activityApi.setManual(date, activeKcal),
+        onSuccess: applySummary,
+    })
+
+    const resetManual = useMutation({
+        mutationFn: (date: string) => activityApi.deleteManual(date),
+        onSuccess: applySummary,
+    })
+
+    return { setManual, resetManual }
 }

@@ -20,6 +20,17 @@
 - Session na frontendu se ukončí při jakékoli odmítavé odpovědi serveru na refresh (kromě 502–504);
   síťová chyba uživatele neodhlásí.
 
+### Osobní API tokeny (iOS Zkratky)
+- Dlouhodobý klíč `cc_pat_…` pro zápis aktivních kalorií z Apple Zdraví (`POST /api/activity`). V DB je jen
+  SHA-256 hash, plný token uživatel uvidí jen jednou při vytvoření. Nevyprší, dá se odvolat; max. 5 aktivních
+  na uživatele, max. 120 požadavků na token za hodinu (pak 429).
+- Vlastní firewall `personal_token` (`security.yaml`) se použije jen pro `/api` požadavky s hlavičkou
+  `Bearer cc_pat_` – token se tak nedostane k JWT autentizaci. Přihlášený token **nemá `ROLE_USER`**, jen role
+  podle scopes (`activity:write` → `ROLE_PAT_ACTIVITY_WRITE`), takže `access_control` ho pustí jen na
+  `POST /api/activity`; jinde dostane 403. Tokeny spravuje jen uživatel s JWT (`/api/tokens`).
+- Únik tokenu = někdo může zapsat aktivní kalorie (max. 31 dní zpět), nic víc. Uživatel token odvolá
+  v Nastavení → Apple Zdraví.
+
 ### Registrace (`RegistrationController`)
 - E-mail se ukládá oříznutý a malými písmeny, heslo 8–4096 znaků, povinný souhlas s podmínkami – ukládá se
   čas a verze podmínek (`terms_accepted_at`, `terms_version`), aby šel souhlas doložit (GDPR, zdravotní data).

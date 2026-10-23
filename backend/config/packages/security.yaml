@@ -25,6 +25,14 @@ security:
 
             # https://symfony.com/doc/current/security/impersonating_user.html
             # switch_user: true
+        # Osobní API tokeny (iOS Zkratky) – jen /api požadavky s „Authorization: Bearer cc_pat_…“,
+        # musí být před firewallem api, jinak by token zkoušela ověřit JWT autentizace
+        personal_token:
+            request_matcher: App\Security\PersonalAccessTokenAuthenticator
+            stateless: true
+            provider: app_user_provider
+            custom_authenticators:
+                - App\Security\PersonalAccessTokenAuthenticator
         api:
             pattern: ^/api
             stateless: true
@@ -45,7 +53,10 @@ security:
             - { path: ^/api, roles: PUBLIC_ACCESS, methods: [ OPTIONS ] }
             # token/invalidate volá frontend při odhlášení bez Authorization hlavičky
             - { path: ^/api/(login|register|register/verify|token/refresh|token/invalidate|auth/(apple|google))$, roles: PUBLIC_ACCESS }
-            - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+            # Zápis aktivních kalorií: přihlášený uživatel (JWT) nebo osobní token se scope activity:write
+            - { path: ^/api/activity$, roles: [ ROLE_USER, ROLE_PAT_ACTIVITY_WRITE ], methods: [ POST ] }
+            # Zbytek API jen pro přihlášeného uživatele – osobní token nemá ROLE_USER, dostane 403
+            - { path: ^/api, roles: ROLE_USER }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
 

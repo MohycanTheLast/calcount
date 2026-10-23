@@ -73,3 +73,18 @@ export type AuthTokens = {
 export type RegisterResult = {
     status: 'registered' | 'verification_pending'
 }
+
+// GET /api/tokens – osobní API token (tajná část se nevrací)
+export type PersonalAccessToken = {
+    id: number
+    name: string
+    prefix: string // začátek tokenu pro rozpoznání, např. cc_pat_ab12cd
+    createdAt: string // ISO 8601
+    lastUsedAt: string | null
+}
+
+// POST /api/tokens – plný token je v odpovědi jen jednou; první token může přepnout zdroj aktivních kalorií
+export type CreatedPersonalAccessToken = PersonalAccessToken & {
+    token: string
+    activitySource: ActivitySource
+}

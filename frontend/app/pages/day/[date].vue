@@ -21,6 +21,7 @@
                     :kcal="totals.kcal"
                     :water-liters="totals.waterLiters"
                     :expenditure-kcal="summary?.expenditureKcal ?? null"
+                    :active-source="summary?.activeSource"
                 />
             </section>
 
@@ -52,6 +53,8 @@
                     />
                 </ul>
             </section>
+
+            <DayExpenditureCard v-if="summary" :summary="summary" />
         </main>
     </div>
 </template>
