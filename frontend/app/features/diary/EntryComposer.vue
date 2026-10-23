@@ -1,5 +1,33 @@
 <template>
     <div>
+        <!-- Náhled fotky nad polem: během rozpoznávání a pak dokud se záznam nezapíše -->
+        <div v-if="capturedImageURL" class="mb-3 flex items-center gap-3">
+            <img
+                :src="capturedImageURL"
+                alt="Vyfocené jídlo"
+                class="w-16 h-16 shrink-0 object-cover rounded-2xl"
+            />
+            <p class="flex-1 text-sm cc-subtle">
+                <template v-if="cameraLoading">Rozpoznávám jídlo na fotce…</template>
+                <template v-else-if="photoRecognized">
+                    Takhle jsme jídlo z fotky rozpoznali. Text můžeš před zapsáním upravit.
+                </template>
+                <template v-else>Jídlo na fotce se nepodařilo rozpoznat. Popiš ho prosím textem.</template>
+            </p>
+            <button
+                v-if="!cameraLoading"
+                type="button"
+                class="cc-icon-btn shrink-0 cc-subtle"
+                title="Zahodit fotku"
+                aria-label="Zahodit fotku"
+                @click="clearPhoto"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M6.7 5.3a1 1 0 0 0-1.4 1.4L10.58 12l-5.3 5.3a1 1 0 1 0 1.42 1.4L12 13.42l5.3 5.3a1 1 0 0 0 1.4-1.42L13.42 12l5.3-5.3a1 1 0 0 0-1.42-1.4L12 10.58 6.7 5.3Z"/>
+                </svg>
+            </button>
+        </div>
+
         <div class="relative">
             <textarea
                 v-model="text"
@@ -55,13 +83,6 @@
                 </button>
             </div>
         </div>
-
-        <img
-            v-if="capturedImageURL"
-            :src="capturedImageURL"
-            alt="Vyfocené jídlo"
-            class="mt-3 w-24 h-24 object-cover rounded-2xl"
-        />
 
         <button
             type="button"
@@ -147,19 +168,26 @@ const {
     error: cameraError,
     loading: cameraLoading,
     openCamera,
-    uploadPhoto
+    uploadPhoto,
+    clearPhoto
 } = useCamera()
 
-// Aktivace fotoaparátu a zpracování snímku – rozpoznané jídlo se jen doplní do pole
+const photoRecognized = ref(false)
+
+// Aktivace fotoaparátu a zpracování snímku – rozpoznané jídlo se jen doplní do pole, uživatel ho může upravit
 const handleOpenCamera = async () => {
     const capturedPhoto = await openCamera()
     if (capturedPhoto) {
+        photoRecognized.value = false
         const result = await uploadPhoto()
         if (result?.food) {
             text.value = result.food
+            photoRecognized.value = true
         }
     }
 }
+
+onBeforeUnmount(clearPhoto)
 
 const onSubmit = async () => {
     if (!text.value.trim() || saving.value) return
@@ -169,6 +197,7 @@ const onSubmit = async () => {
     try {
         const entry = await createEntry.mutateAsync(text.value)
         text.value = ''
+        clearPhoto()
         emit('created', entry)
     } catch (e: any) {
         // Server vrací srozumitelné hlášky (např. vyčerpaný denní limit AI, příliš dlouhý text)

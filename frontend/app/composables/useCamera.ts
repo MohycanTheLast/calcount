@@ -27,7 +27,8 @@ export function useCamera() {
                     error.value = null
 
                     if (file) {
-                        // URL pro náhled obrázku (např. při zobrazení vyfocené fotografie)
+                        // URL pro náhled obrázku (např. při zobrazení vyfocené fotografie); předchozí uvolnit
+                        if (capturedImageURL.value) URL.revokeObjectURL(capturedImageURL.value)
                         capturedImageURL.value = URL.createObjectURL(file)
                     }
 
@@ -61,12 +62,20 @@ export function useCamera() {
         }
     }
 
+    // Zahodí fotku i náhled (uvolní paměť po URL.createObjectURL)
+    const clearPhoto = () => {
+        if (capturedImageURL.value) URL.revokeObjectURL(capturedImageURL.value)
+        capturedImageURL.value = null
+        photo.value = null
+    }
+
     return {
         photo,
         capturedImageURL,
         error,
         loading,
         openCamera,
-        uploadPhoto
+        uploadPhoto,
+        clearPhoto
     }
 }
