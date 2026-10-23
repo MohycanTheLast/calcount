@@ -12,7 +12,9 @@ export default defineNuxtConfig({
     ],
     vite: {
         plugins: [
-            tailwindcss(),
+            // @tailwindcss/vite a Nuxt odkazují na jiné typové definice Rollupu (PluginContextMeta),
+            // za běhu je plugin v pořádku – přetypování jen umlčí nesoulad typů v `nuxt typecheck`.
+            tailwindcss() as any,
         ],
     },
     ssr: false,        // čisté SPA

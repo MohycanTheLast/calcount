@@ -5,7 +5,6 @@ namespace App\Service;
 use App\Entity\DietDiary;
 use App\Entity\Security\User;
 use App\Model\DietDiaryEntry;
-use App\Model\DietDiaryEntryDay;
 use App\Model\DietRecord;
 use App\Repository\DietDiaryRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,11 +21,10 @@ class DietDiaryService
 
     public function create(string $text, DietRecord $record): DietDiary
     {
-        // Případně další validace nebo odstranění HTML či nebezpečných znaků
-        $text = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
-
-        // Oříznutí textu na 255 znaků
-        $text = substr($text, 0, 255);
+        // Text se ukládá tak, jak ho uživatel napsal. Escapuje se až při výstupu (frontend, JSON),
+        // jinak by se v detailu zobrazovaly entity typu &quot; a nešlo by v textu vyhledávat.
+        // Oříznutí na délku sloupce (255 znaků) po znacích, ne po bajtech – nerozbije diakritiku.
+        $text = mb_substr(trim($text), 0, 255);
 
         $newItem = (new DietDiary())
             ->setContent($text)
@@ -62,31 +60,6 @@ class DietDiaryService
     {
         $this->entityManager->remove($record);
         $this->entityManager->flush();
-    }
-
-    /**
-     * Původní formát pro /api/entries (frontend do refaktoru). Nové obrazovky mají používat /api/days.
-     *
-     * @return DietDiaryEntryDay[]
-     */
-    public function getAllEntries(): array
-    {
-        /** @var DietDiaryRepository $dietDiaryRepo */
-        $dietDiaryRepo = $this->entityManager->getRepository(DietDiary::class);
-
-        $entries = [];
-
-        foreach ($dietDiaryRepo->getAggregatedEntriesByDay($this->getLoggedUser()) as $date => $totals) {
-            $entries[] = new DietDiaryEntryDay(
-                date: (new \DateTimeImmutable($date))->format('d.m.Y'),
-                kcal: $totals['kcal'],
-                // Výdej je v /api/days (BMR + aktivní kalorie podle zdroje)
-                kcalBurned: 0,
-                water: round($totals['waterMl'] / 1000, 2) // Voda v litrech
-            );
-        }
-
-        return $entries;
     }
 
     /**

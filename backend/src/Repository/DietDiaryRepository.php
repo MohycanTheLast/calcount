@@ -8,9 +8,6 @@ use Doctrine\ORM\EntityRepository;
 
 class DietDiaryRepository extends EntityRepository
 {
-    // Kolik dní zpět vrací /api/entries (včetně dneška) – stejně jako denní karty na frontendu
-    public const RECENT_DAYS = 14;
-
     /**
      * Součty příjmu za jednotlivé dny v rozsahu (jen dny, kde existuje aspoň jeden záznam).
      *
@@ -44,18 +41,6 @@ class DietDiaryRepository extends EntityRepository
         }
 
         return $totals;
-    }
-
-    /**
-     * Posledních RECENT_DAYS dní (pro /api/entries).
-     *
-     * @return array<string, array{kcal: int, waterMl: int, entryCount: int}>
-     */
-    public function getAggregatedEntriesByDay(User $user): array
-    {
-        $today = new \DateTimeImmutable('today');
-
-        return $this->getDailyTotals($user, $today->modify(sprintf('-%d days', self::RECENT_DAYS - 1)), $today);
     }
 
     public function getEntriesByDateStr(string $date, User $user): array

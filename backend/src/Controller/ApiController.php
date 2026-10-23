@@ -34,12 +34,6 @@ class ApiController extends AbstractController
     {
     }
 
-    #[Route('/api/entries', methods: ['GET'])]
-    public function entries(): JsonResponse
-    {
-        return new JsonResponse($this->dietDiaryService->getAllEntries());
-    }
-
     #[Route('/api/calculate', methods: ['POST'])]
     public function calculate(Request $request): JsonResponse
     {
