@@ -88,6 +88,11 @@
         backdrop-filter: blur(10px);
     }
 
+    /* Záhlaví bez ovládacích prvků (motto v Deníku) – při posunu odjede pryč, šetří místo na malém displeji */
+    .cc-nav--static {
+        position: static;
+    }
+
     .cc-card {
         @apply border;
         border-color: rgb(var(--cc-border));
