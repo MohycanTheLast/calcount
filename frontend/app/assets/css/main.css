@@ -173,4 +173,162 @@
         @apply text-xs mt-1;
         color: rgb(var(--cc-muted));
     }
+
+    /* --- hlavička obrazovky: [akce vlevo] titulek [akce vpravo] --- */
+    .cc-header {
+        @apply grid items-center gap-2 py-3;
+        grid-template-columns: 1fr auto 1fr;
+    }
+
+    .cc-header-title {
+        @apply text-base font-semibold tracking-tight text-center truncate;
+    }
+
+    .cc-header-action {
+        @apply inline-flex items-center gap-1 text-base font-medium min-h-[44px] select-none;
+        color: rgb(var(--cc-accent));
+    }
+
+    .cc-header-action:disabled {
+        opacity: 0.5;
+    }
+
+    /* --- spodní tab bar --- */
+    .cc-tabbar {
+        @apply fixed bottom-0 left-0 right-0 z-50;
+        padding-bottom: env(safe-area-inset-bottom);
+        background: color-mix(in srgb, rgb(var(--cc-bg)) 82%, transparent);
+        border-top: 1px solid rgb(var(--cc-border));
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+
+    .cc-tab {
+        @apply flex flex-1 flex-col items-center justify-center gap-0.5 h-14 text-[11px] font-medium select-none transition-colors;
+        color: rgb(var(--cc-muted));
+    }
+
+    .cc-tab--active {
+        color: rgb(var(--cc-accent));
+    }
+
+    /* --- seznam ve stylu iOS (zaoblená skupina řádků s oddělovači) --- */
+    .cc-list {
+        @apply overflow-hidden;
+        background: rgb(var(--cc-surface));
+        border-radius: var(--cc-radius-sm);
+    }
+
+    .cc-list-row {
+        @apply px-4 py-3;
+    }
+
+    .cc-list-row + .cc-list-row {
+        border-top: 1px solid rgb(var(--cc-border));
+    }
+
+    .cc-section-title {
+        @apply text-xs font-semibold uppercase tracking-wide px-1 mb-2;
+        color: rgb(var(--cc-muted));
+    }
+
+    /* --- štítek (deficit/přebytek) --- */
+    .cc-chip {
+        @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold;
+    }
+
+    .cc-chip--good {
+        color: rgb(var(--cc-accent));
+        background: color-mix(in srgb, rgb(var(--cc-accent)) 14%, transparent);
+    }
+
+    .cc-chip--warn {
+        color: rgb(245 158 11);
+        background: color-mix(in srgb, rgb(245 158 11) 14%, transparent);
+    }
+
+    /* --- průběh příjmu vůči výdeji --- */
+    .cc-progress {
+        @apply h-2 w-full rounded-full overflow-hidden;
+        background: color-mix(in srgb, rgb(var(--cc-border)) 70%, transparent);
+    }
+
+    .cc-progress-bar {
+        @apply h-full rounded-full transition-[width] duration-500;
+        background: rgb(var(--cc-accent));
+    }
+
+    .cc-progress-bar--over {
+        background: rgb(245 158 11);
+    }
+
+    .cc-icon-btn {
+        @apply w-11 h-11 rounded-full flex items-center justify-center transition active:scale-95 select-none;
+        background: color-mix(in srgb, rgb(var(--cc-text)) 8%, transparent);
+    }
+
+    .cc-btn-danger-text {
+        @apply text-sm font-medium;
+        color: rgb(239 68 68);
+    }
+}
+
+/* Nápověda ke klávesnici jen pro zařízení s myší/klávesnicí */
+@media (pointer: coarse) {
+    .cc-only-fine-pointer {
+        display: none;
+    }
+}
+
+/* ===== Přechody mezi obrazovkami ===== */
+.cc-fade-enter-active,
+.cc-fade-leave-active {
+    transition: opacity 0.15s ease;
+}
+
+.cc-fade-enter-from,
+.cc-fade-leave-to {
+    opacity: 0;
+}
+
+/* push = otevření detailu (zprava), pop = návrat zpět (zleva) */
+.cc-push-enter-active,
+.cc-push-leave-active,
+.cc-pop-enter-active,
+.cc-pop-leave-active {
+    transition: transform 0.18s ease-out, opacity 0.18s ease-out;
+}
+
+.cc-push-enter-from,
+.cc-pop-leave-to {
+    transform: translateX(32px);
+    opacity: 0;
+}
+
+.cc-push-leave-to,
+.cc-pop-enter-from {
+    transform: translateX(-32px);
+    opacity: 0;
+}
+
+/* Výsledek nového záznamu */
+.cc-pop-in-enter-active {
+    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+
+.cc-pop-in-enter-from {
+    transform: translateY(8px);
+    opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cc-fade-enter-active,
+    .cc-fade-leave-active,
+    .cc-push-enter-active,
+    .cc-push-leave-active,
+    .cc-pop-enter-active,
+    .cc-pop-leave-active,
+    .cc-pop-in-enter-active {
+        transition: none;
+    }
 }

@@ -19,7 +19,7 @@ export type UserSettings = {
 const DEFAULT_SETTINGS: UserSettings = {
     bmrKcal: null,
     avgDailyActivityKcal: null,
-    themeMode: 'system',
+    themeMode: 'dark',
     aiCommentMode: 'none',
     weightKg: null,
     saveWeight: false,
@@ -28,11 +28,16 @@ const DEFAULT_SETTINGS: UserSettings = {
 const THEME_STORAGE_KEY = 'cc_theme'
 const THEME_MODES: ThemeMode[] = ['system', 'light', 'dark']
 
+// Barvy pozadí (--cc-bg) pro <meta name="theme-color"> – lišta prohlížeče/PWA ladí s tématem aplikace
+const THEME_COLORS = { light: '#f8fafc', dark: '#020617' }
+
 const normalizeThemeMode = (value: unknown): ThemeMode =>
-    THEME_MODES.includes(value as ThemeMode) ? value as ThemeMode : 'system'
+    THEME_MODES.includes(value as ThemeMode) ? value as ThemeMode : DEFAULT_SETTINGS.themeMode
 
 export const useUserSettings = () => {
     const settings = useState<UserSettings>('user:settings', () => ({ ...DEFAULT_SETTINGS }))
+    // true po prvním úspěšném načtení ze serveru (do té doby nepočítáme deficit z výchozích hodnot)
+    const loaded = useState<boolean>('user:settings:loaded', () => false)
     const loading = useState<boolean>('user:settings:loading', () => false)
     const saving = useState<boolean>('user:settings:saving', () => false)
     const error = useState<string | null>('user:settings:error', () => null)
@@ -70,6 +75,11 @@ export const useUserSettings = () => {
                 : settings.value.themeMode
 
         root.classList.toggle('dark', effective === 'dark')
+
+        document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+            meta.removeAttribute('media')
+            meta.setAttribute('content', THEME_COLORS[effective])
+        })
     }
 
     const fetchFromApi = async () => {
@@ -82,6 +92,7 @@ export const useUserSettings = () => {
             })
 
             settings.value = { ...DEFAULT_SETTINGS, ...res, themeMode: normalizeThemeMode(res.themeMode) }
+            loaded.value = true
             applyTheme()
             persistTheme()
         } catch (e) {
@@ -120,11 +131,25 @@ export const useUserSettings = () => {
         }
     }
 
+    const ensureLoaded = async () => {
+        if (loaded.value || loading.value) return
+        await fetchFromApi().catch(() => {})
+    }
+
+    // Denní výdej z nastavení (BMR + průměrná aktivita); null, dokud není vyplněné BMR
+    const dailyExpenditureKcal = computed<number | null>(() => {
+        if (!loaded.value || !settings.value.bmrKcal) return null
+        return settings.value.bmrKcal + (settings.value.avgDailyActivityKcal ?? 0)
+    })
+
     return {
         settings,
+        loaded,
         loading,
         saving,
         error,
+        dailyExpenditureKcal,
+        ensureLoaded,
         loadThemeFromStorage,
         applyTheme,
         fetchFromApi,

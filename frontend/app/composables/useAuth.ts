@@ -81,6 +81,12 @@ export const useAuth = () => {
         expiresAtMs.value = null
         user.value = null
         persistToStorage()
+
+        // Data předchozího uživatele nesmí zůstat v paměti pro dalšího (deník, nastavení).
+        // Téma zůstává – patří zařízení a je uložené v localStorage.
+        useState('diary:entries').value = []
+        useState('diary:loaded').value = false
+        useState('user:settings:loaded').value = false
     }
 
     const setTokensFromBackend = (payload: {

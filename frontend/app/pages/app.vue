@@ -6,5 +6,6 @@
 import Main from "~/Main.vue";
 definePageMeta({
     middleware: ['auth'],
+    tabBar: true,
 })
 </script>

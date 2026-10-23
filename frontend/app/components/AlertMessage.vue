@@ -1,11 +1,7 @@
 <template>
     <transition name="fade">
-        <div v-if="visible" class="mt-10 rounded-2xl bg-emerald-50 border border-emerald-100 p-3">
-            <div class="space-y-3">
-                <p class="text-sm text-slate-600">
-                    {{ message }}
-                </p>
-            </div>
+        <div v-if="visible" class="mt-4 cc-chip cc-chip--good w-full justify-center py-2.5 text-sm" role="status">
+            {{ message }}
         </div>
     </transition>
 </template>

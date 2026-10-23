@@ -21,7 +21,10 @@ export default defineNuxtConfig({
         },
     },
     app: {
+        // Plynulý přechod mezi obrazovkami; detail dne má vlastní slide (middleware/transition.global.ts)
+        pageTransition: { name: 'cc-fade', mode: 'out-in' },
         head: {
+            viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
             link: [
                 { rel: 'manifest', href: '/manifest.webmanifest' },
                 { rel: 'apple-touch-icon', href: '/icon-180.png' }
@@ -36,9 +39,9 @@ export default defineNuxtConfig({
             ],
             script: [
                 // Aplikuje uložené téma ještě před načtením JS, aby při startu neproblikla světlá verze.
-                // Stejná logika jako applyTheme() v useUserSettings.
+                // Stejná logika jako applyTheme() v useUserSettings – výchozí (nic uloženo) je tmavé.
                 {
-                    innerHTML: "try{var m=localStorage.getItem('cc_theme');if(m==='dark'||(m!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}",
+                    innerHTML: "try{var m=localStorage.getItem('cc_theme');if(m!=='light'&&(m!=='system'||window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){document.documentElement.classList.add('dark')}",
                 },
             ],
         }

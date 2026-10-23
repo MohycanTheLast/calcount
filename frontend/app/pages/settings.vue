@@ -1,94 +1,88 @@
 <template>
     <div class="cc-page">
         <header class="cc-nav">
-            <div class="cc-container py-4 flex items-center justify-between">
-                <button class="cc-link" type="button" @click="goBack">
-                    Zpět
-                </button>
-
-                <div class="text-base font-semibold tracking-tight">
-                    Nastavení
+            <div class="cc-container cc-header">
+                <div></div>
+                <h1 class="cc-header-title">Nastavení</h1>
+                <div class="text-right">
+                    <button
+                        type="button"
+                        class="cc-header-action font-semibold"
+                        :disabled="saving || !loaded"
+                        @click="onSave"
+                    >
+                        {{ saving ? 'Ukládám…' : 'Uložit' }}
+                    </button>
                 </div>
-
-                <div class="w-10"></div>
             </div>
         </header>
 
-        <main class="cc-container py-4 pb-24 space-y-6 max-w-md mx-auto">
-            <!-- ÚČET -->
-            <section class="cc-card cc-card-pad space-y-3">
-                <h2 class="cc-title text-center">Účet</h2>
+        <main class="cc-container pt-4 pb-28 space-y-6">
+            <p v-if="error" class="text-sm text-red-400">
+                {{ error }}
+            </p>
 
-                <button
-                    type="button"
-                    class="w-full cc-btn-primary"
-                    :disabled="saving || loading"
-                    @click="onSave"
-                >
-                    <span v-if="!saving">Uložit změny</span>
-                    <span v-else>Ukládám…</span>
-                </button>
-
-                <p v-if="error" class="text-sm text-red-400">
-                    {{ error }}
-                </p>
-
-                <p v-if="loading" class="text-xs cc-subtle">
-                    Načítám nastavení…
-                </p>
-            </section>
+            <p v-if="loading && !loaded" class="text-sm cc-subtle">
+                Načítám nastavení…
+            </p>
 
             <!-- METABOLISMUS -->
-            <section class="cc-card cc-card-pad space-y-4">
-                <h2 class="cc-title text-center">Metabolismus</h2>
+            <section>
+                <h2 class="cc-section-title">Metabolismus</h2>
 
-                <label class="block">
-                    <div class="flex items-center justify-between gap-3 mb-1">
-                        <div class="text-sm cc-subtle">BMR (bazální metabolismus) v kcal / den</div>
+                <div class="cc-card cc-card-pad space-y-4">
+                    <label class="block">
+                        <div class="flex items-center justify-between gap-3 mb-1">
+                            <div class="text-sm cc-subtle">BMR (bazální metabolismus), kcal / den</div>
 
-                        <button type="button" class="cc-link text-sm" @click="openBmrCalc">
-                            Spočítat
-                        </button>
-                    </div>
+                            <button type="button" class="cc-link" @click.prevent="openBmrCalc">
+                                Spočítat
+                            </button>
+                        </div>
 
-                    <input
-                        v-model.number="settings.bmrKcal"
-                        type="number"
-                        min="0"
-                        inputmode="numeric"
-                        class="cc-input"
-                        placeholder="Např. 1650"
-                    />
-                </label>
+                        <input
+                            v-model.number="settings.bmrKcal"
+                            type="number"
+                            min="0"
+                            inputmode="numeric"
+                            class="cc-input"
+                            placeholder="Např. 1650"
+                        />
+                    </label>
 
-                <label class="block">
-                    <div class="text-sm cc-subtle mb-1">Průměrná denní aktivita (kcal / den)</div>
-                    <input
-                        v-model.number="settings.avgDailyActivityKcal"
-                        type="number"
-                        min="0"
-                        inputmode="numeric"
-                        class="cc-input"
-                        placeholder="Např. 400"
-                    />
-                </label>
+                    <label class="block">
+                        <div class="text-sm cc-subtle mb-1">Průměrná denní aktivita, kcal / den</div>
+                        <input
+                            v-model.number="settings.avgDailyActivityKcal"
+                            type="number"
+                            min="0"
+                            inputmode="numeric"
+                            class="cc-input"
+                            placeholder="Např. 400"
+                        />
+                    </label>
+
+                    <p class="text-xs cc-subtle">
+                        Denní výdej = BMR + aktivita. Z něj se v Deníku počítá kalorický deficit.
+                    </p>
+                </div>
             </section>
 
             <!-- VZHLED -->
-            <section class="cc-card cc-card-pad space-y-3">
-                <h2 class="cc-title text-center">Vzhled aplikace</h2>
+            <section>
+                <h2 class="cc-section-title">Vzhled aplikace</h2>
 
                 <div class="cc-option-grid">
-                    <label class="cc-option" :class="{ 'cc-option--selected': settings.themeMode === 'system' }">
+                    <label class="cc-option" :class="{ 'cc-option--selected': settings.themeMode === 'dark' }">
                         <input
                             class="sr-only"
                             v-model="settings.themeMode"
                             type="radio"
-                            value="system"
-                            aria-label="Dle nastavení telefonu"
+                            value="dark"
+                            aria-label="Tmavý režim"
                         />
-                        <div class="cc-option-title">Auto</div>
-                        <div class="cc-option-desc">Dle telefonu</div>
+                        <div class="cc-option-title">Tmavý</div>
+                        <div class="cc-option-desc">Výchozí</div>
                     </label>
 
                     <label class="cc-option" :class="{ 'cc-option--selected': settings.themeMode === 'light' }">
@@ -103,148 +97,154 @@
                         <div class="cc-option-desc">Vždy</div>
                     </label>
 
-                    <label class="cc-option" :class="{ 'cc-option--selected': settings.themeMode === 'dark' }">
+                    <label class="cc-option" :class="{ 'cc-option--selected': settings.themeMode === 'system' }">
                         <input
                             class="sr-only"
                             v-model="settings.themeMode"
                             type="radio"
-                            value="dark"
-                            aria-label="Tmavý režim"
+                            value="system"
+                            aria-label="Dle nastavení telefonu"
                         />
-                        <div class="cc-option-title">Tmavý</div>
-                        <div class="cc-option-desc">Vždy</div>
+                        <div class="cc-option-title">Auto</div>
+                        <div class="cc-option-desc">Dle telefonu</div>
                     </label>
                 </div>
             </section>
 
             <!-- AI -->
-            <section class="cc-card cc-card-pad space-y-3">
-                <h2 class="cc-title text-center">Nastavení AI</h2>
-
-                <div class="text-sm cc-subtle">
-                    S každým novým zápisem:
-                </div>
+            <section>
+                <h2 class="cc-section-title">Komentář AI k zápisu</h2>
 
                 <select v-model="settings.aiCommentMode" class="cc-input">
-                    <option value="none">Si nepřeji žádný komentář</option>
-                    <option value="brief_health">Stručný komentář, zda je jídlo zdravé a vhodné</option>
-                    <option value="funny">Si přeji nějaký vtipný komentář</option>
-                    <option value="praise_or_criticize">Si přeji pochvalu nebo kritiku</option>
-                    <option value="random">Nechám to náhodě (občas komentář, občas ne)</option>
+                    <option value="none">Bez komentáře</option>
+                    <option value="brief_health">Stručně, zda je jídlo zdravé a vhodné</option>
+                    <option value="funny">Vtipný komentář</option>
+                    <option value="praise_or_criticize">Pochvala nebo kritika</option>
+                    <option value="random">Nechám to náhodě</option>
                 </select>
+            </section>
+
+            <!-- ÚČET -->
+            <section>
+                <h2 class="cc-section-title">Účet</h2>
+
+                <div class="cc-list">
+                    <button type="button" class="cc-list-row w-full text-left cc-btn-danger-text text-base" @click="onLogout">
+                        Odhlásit se
+                    </button>
+                </div>
             </section>
         </main>
 
-        <!-- FULLSCREEN POPUP: Výpočet BMR + Váha -->
-        <div
-            v-if="showBmrCalc"
-            class="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center overflow-hidden"
-            @click.self="closeBmrCalc"
-        >
+        <!-- VÝPOČET BMR + VÁHA -->
+        <Transition name="cc-fade">
             <div
-                class="w-full sm:max-w-md max-h-[92vh]
-               rounded-t-3xl sm:rounded-3xl
-               shadow-2xl flex flex-col overflow-hidden"
-                style="background: rgb(var(--cc-surface)); color: rgb(var(--cc-text)); border: 1px solid rgb(var(--cc-border));"
+                v-if="showBmrCalc"
+                class="fixed inset-0 z-[60] bg-black/60 flex items-end sm:items-center justify-center overflow-hidden"
+                @click.self="closeBmrCalc"
             >
                 <div
-                    class="p-4 flex items-center justify-between"
-                    style="border-bottom: 1px solid rgb(var(--cc-border));"
+                    class="w-full sm:max-w-md max-h-[92vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+                    style="background: rgb(var(--cc-surface)); color: rgb(var(--cc-text)); border: 1px solid rgb(var(--cc-border));"
                 >
-                    <button type="button" class="cc-link" @click="closeBmrCalc">
-                        Zpět
-                    </button>
-                    <div class="text-base font-semibold">Výpočet BMR</div>
-                    <div class="w-10"></div>
-                </div>
-
-                <div class="p-4 overflow-y-auto scroll-ios flex-1 space-y-5">
-                    <section class="space-y-3">
-                        <div class="text-sm font-semibold">Parametry</div>
-
-                        <label class="block">
-                            <div class="text-xs cc-subtle mb-1">Pohlaví</div>
-                            <select v-model="bmr.sex" class="cc-input">
-                                <option value="male">Muž</option>
-                                <option value="female">Žena</option>
-                            </select>
-                        </label>
-
-                        <div class="grid grid-cols-3 gap-3">
-                            <label class="block">
-                                <div class="text-xs cc-subtle mb-1">Věk</div>
-                                <input
-                                    v-model.number="bmr.age"
-                                    type="number"
-                                    min="0"
-                                    inputmode="numeric"
-                                    class="cc-input"
-                                    placeholder="let"
-                                />
-                            </label>
-
-                            <label class="block">
-                                <div class="text-xs cc-subtle mb-1">Výška</div>
-                                <input
-                                    v-model.number="bmr.heightCm"
-                                    type="number"
-                                    min="0"
-                                    inputmode="numeric"
-                                    class="cc-input"
-                                    placeholder="cm"
-                                />
-                            </label>
-
-                            <label class="block">
-                                <div class="text-xs cc-subtle mb-1">Váha</div>
-                                <input
-                                    v-model.number="settings.weightKg"
-                                    type="number"
-                                    min="0"
-                                    step="any"
-                                    inputmode="decimal"
-                                    class="cc-input"
-                                    placeholder="kg"
-                                />
-                            </label>
+                    <div class="px-4 cc-header" style="border-bottom: 1px solid rgb(var(--cc-border));">
+                        <div>
+                            <button type="button" class="cc-header-action" @click="closeBmrCalc">
+                                Zpět
+                            </button>
                         </div>
+                        <div class="cc-header-title">Výpočet BMR</div>
+                        <div></div>
+                    </div>
 
-                        <label class="flex items-start gap-3 pt-1">
-                            <input v-model="settings.saveWeight" type="checkbox" class="mt-1" />
-                            <span class="text-sm">
-                Uložit váhu
-                <div class="text-xs cc-subtle">např. pro pozdější porovnání</div>
-              </span>
-                        </label>
-                    </section>
+                    <div class="p-4 overflow-y-auto scroll-ios flex-1 space-y-5">
+                        <section class="space-y-3">
+                            <label class="block">
+                                <div class="text-xs cc-subtle mb-1">Pohlaví</div>
+                                <select v-model="bmr.sex" class="cc-input">
+                                    <option value="male">Muž</option>
+                                    <option value="female">Žena</option>
+                                </select>
+                            </label>
 
-                    <section class="space-y-2">
-                        <button type="button" class="w-full cc-btn-primary" @click="computeAndApplyBmr">
-                            Spočítat a vyplnit BMR
-                        </button>
+                            <div class="grid grid-cols-3 gap-3">
+                                <label class="block">
+                                    <div class="text-xs cc-subtle mb-1">Věk</div>
+                                    <input
+                                        v-model.number="bmr.age"
+                                        type="number"
+                                        min="0"
+                                        inputmode="numeric"
+                                        class="cc-input"
+                                        placeholder="let"
+                                    />
+                                </label>
 
-                        <p v-if="bmrError" class="text-sm text-red-400">
-                            {{ bmrError }}
-                        </p>
+                                <label class="block">
+                                    <div class="text-xs cc-subtle mb-1">Výška</div>
+                                    <input
+                                        v-model.number="bmr.heightCm"
+                                        type="number"
+                                        min="0"
+                                        inputmode="numeric"
+                                        class="cc-input"
+                                        placeholder="cm"
+                                    />
+                                </label>
 
-                        <p class="text-xs cc-subtle">
-                            Použit vzorec Mifflin–St Jeor. Je to odhad.
-                        </p>
-                    </section>
+                                <label class="block">
+                                    <div class="text-xs cc-subtle mb-1">Váha</div>
+                                    <input
+                                        v-model.number="settings.weightKg"
+                                        type="number"
+                                        min="0"
+                                        step="any"
+                                        inputmode="decimal"
+                                        class="cc-input"
+                                        placeholder="kg"
+                                    />
+                                </label>
+                            </div>
+
+                            <label class="flex items-start gap-3 pt-1">
+                                <input v-model="settings.saveWeight" type="checkbox" class="mt-1" />
+                                <span class="text-sm">
+                                    Uložit váhu
+                                    <span class="block text-xs cc-subtle">např. pro pozdější porovnání</span>
+                                </span>
+                            </label>
+                        </section>
+
+                        <section class="space-y-2">
+                            <button type="button" class="w-full cc-btn-primary" @click="computeAndApplyBmr">
+                                Spočítat a vyplnit BMR
+                            </button>
+
+                            <p v-if="bmrError" class="text-sm text-red-400">
+                                {{ bmrError }}
+                            </p>
+
+                            <p class="text-xs cc-subtle">
+                                Použit vzorec Mifflin–St Jeor. Je to odhad.
+                            </p>
+                        </section>
+                    </div>
+
+                    <div class="pb-safe"></div>
                 </div>
-
-                <div class="pb-safe"></div>
             </div>
-        </div>
+        </Transition>
     </div>
 </template>
 
 <script setup lang="ts">
 definePageMeta({
     middleware: ['auth'],
+    tabBar: true,
 })
 
-const { settings, loading, saving, error, fetchFromApi, saveToApi } = useUserSettings()
+const { settings, loaded, loading, saving, error, fetchFromApi, saveToApi } = useUserSettings()
+const { signOut } = useAuth()
 
 const showBmrCalc = ref(false)
 const bmrError = ref<string | null>(null)
@@ -267,10 +267,6 @@ onBeforeUnmount(() => {
     document.body.classList.remove('overflow-hidden')
 })
 
-const goBack = async () => {
-    await navigateTo('/app')
-}
-
 const onSave = async () => {
     try {
         await saveToApi()
@@ -278,7 +274,10 @@ const onSave = async () => {
     } catch {
         // error je už nastavený v composable
     }
+}
 
+const onLogout = async () => {
+    await signOut()
 }
 
 const openBmrCalc = () => {
@@ -288,7 +287,8 @@ const openBmrCalc = () => {
 }
 
 const closeBmrCalc = () => {
-
+    showBmrCalc.value = false
+    document.body.classList.remove('overflow-hidden')
 }
 
 const computeAndApplyBmr = () => {
@@ -311,7 +311,6 @@ const computeAndApplyBmr = () => {
 
     settings.value.bmrKcal = Math.round(base + sexConst)
 
-    showBmrCalc.value = false
-    document.body.classList.remove('overflow-hidden')
+    closeBmrCalc()
 }
 </script>
