@@ -32,8 +32,8 @@ class DietDiaryService
 
         $newItem = (new DietDiary())
             ->setContent($text)
-            ->setKcal($record->kcal)
-            ->setWaterInMl($record->waterInMl)
+            ->setKcal((int) round($record->kcal))
+            ->setWaterInMl((int) round($record->waterInMl))
             ->setCreatedAt(new \DateTime())
             ->setUser($this->getLoggedUser())
         ;
@@ -54,8 +54,7 @@ class DietDiaryService
             $record->setWaterInMl((int)$data['waterInMl']);
         }
 
-        $record->setUser($this->getLoggedUser());
-
+        // Vlastník se nastavuje jen při vytvoření; úpravu cizího záznamu blokuje DietDiaryVoter
         $this->entityManager->persist($record);
         $this->entityManager->flush();
     }

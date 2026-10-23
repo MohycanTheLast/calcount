@@ -7,6 +7,8 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    # Výchozí hodnoty volitelných env proměnných (lze přepsat v .env.local / na serveru)
+    env(AI_DAILY_LIMIT): '50'
 
 services:
     # default configuration for services in *this* file
@@ -34,3 +36,16 @@ services:
         arguments:
             $accessTokenTtlSeconds: '%lexik_jwt_authentication.token_ttl%'
             $refreshTokenTtlSeconds: '%gesdinet_jwt_refresh_token.ttl%'
+
+    # Externí přihlášení – bez nastaveného client ID je endpoint vypnutý (404). Víc ID oddělit čárkou.
+    App\Security\GoogleIdTokenVerifier:
+        arguments:
+            $clientIds: '%env(default::GOOGLE_CLIENT_IDS)%'
+
+    App\Security\AppleIdTokenVerifier:
+        arguments:
+            $clientIds: '%env(default::APPLE_CLIENT_IDS)%'
+
+    App\Service\AiUsageLimiter:
+        arguments:
+            $dailyLimit: '%env(int:AI_DAILY_LIMIT)%'

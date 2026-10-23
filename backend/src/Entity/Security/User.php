@@ -4,6 +4,8 @@ namespace App\Entity\Security;
 
 use App\Entity\UserSettings;
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -29,14 +31,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToOne(targetEntity: UserSettings::class, mappedBy: 'user', cascade: ['persist', 'remove'])]
     private ?UserSettings $settings = null;
 
-    private ?string $appleId = null;
-    private ?string $googleId = null;
+    /**
+     * Propojené externí účty (Google, Apple, …)
+     *
+     * @var Collection<int, UserIdentity>
+     */
+    #[ORM\OneToMany(targetEntity: UserIdentity::class, mappedBy: 'user', cascade: ['persist', 'remove'])]
+    private Collection $identities;
 
     /**
-     * @var string The hashed password
+     * @var string|null The hashed password; null u účtu založeného jen přes externí přihlášení
      */
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?string $password = null;
+
+    public function __construct()
+    {
+        $this->identities = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -108,7 +120,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function __serialize(): array
     {
         $data = (array) $this;
-        $data["\0".self::class."\0password"] = hash('crc32c', $this->password);
+        $data["\0".self::class."\0password"] = hash('crc32c', (string) $this->password);
 
         return $data;
     }
@@ -142,5 +154,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         }
 
         return $this;
+    }
+
+    /**
+     * @return Collection<int, UserIdentity>
+     */
+    public function getIdentities(): Collection
+    {
+        return $this->identities;
+    }
+
+    public function linkIdentity(string $provider, string $providerUserId, ?string $email): UserIdentity
+    {
+        $identity = new UserIdentity($this, $provider, $providerUserId, $email);
+        $this->identities->add($identity);
+
+        return $identity;
     }
 }

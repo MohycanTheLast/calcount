@@ -18,7 +18,7 @@ class Burned
     protected string $note;
 
     #[ORM\Column(type: "integer", nullable: false)]
-    protected string $kcal;
+    protected int $kcal;
 
     #[ORM\Column(name: "update_at", type: "datetime", nullable: true)]
     protected \DateTimeInterface $updatedAt;
@@ -48,12 +48,12 @@ class Burned
         return $this;
     }
 
-    public function getKcal(): string
+    public function getKcal(): int
     {
         return $this->kcal;
     }
 
-    public function setKcal(string $kcal): Burned
+    public function setKcal(int $kcal): Burned
     {
         $this->kcal = $kcal;
         return $this;

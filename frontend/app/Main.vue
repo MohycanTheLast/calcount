@@ -301,8 +301,9 @@ const onSubmit = async () => {
 
         text.value = ''
         refreshDiary()
-    } catch (e) {
-        error.value = 'Nepodařilo se záznam uložit'
+    } catch (e: any) {
+        // Server vrací srozumitelné hlášky (např. vyčerpaný denní limit AI, příliš dlouhý text)
+        error.value = e?.data?.error ?? 'Nepodařilo se záznam uložit'
     } finally {
         loadingSave.value = false
     }

@@ -60,8 +60,8 @@ export function useCamera(apiUrl: string) {
             })
 
             return result
-        } catch (err) {
-            error.value = 'Chyba při odesílání fotografie.'
+        } catch (err: any) {
+            error.value = err?.data?.error ?? 'Chyba při odesílání fotografie.'
             console.error(err)
         } finally {
             loading.value = false

@@ -2,69 +2,18 @@
 
 namespace App\Security;
 
-use Firebase\JWT\JWK;
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
-
-class AppleIdTokenVerifier
+/**
+ * Client ID z env APPLE_CLIENT_IDS (Services ID pro web, bundle ID iOS aplikace – oddělené čárkou).
+ */
+class AppleIdTokenVerifier extends OidcIdTokenVerifier
 {
-    public function __construct(
-        private HttpClientInterface $httpClient,
-        private string $appleClientId // z configu
-    ) {}
-
-    public function verify(string $idToken): array
+    protected function jwksUrl(): string
     {
-        $keys = $this->getApplePublicKeys();
-
-        $decoded = null;
-        foreach ($keys as $key) {
-            try {
-                $decoded = JWT::decode(
-                    $idToken,
-                    new Key($key['publicKey'], 'RS256')
-                );
-                break;
-            } catch (\Exception) {}
-        }
-
-        if (!$decoded) {
-            throw new \RuntimeException('Invalid Apple token');
-        }
-
-        // Povinné kontroly
-        if ($decoded->iss !== 'https://appleid.apple.com') {
-            throw new \RuntimeException('Invalid issuer');
-        }
-
-        if ($decoded->aud !== $this->appleClientId) {
-            throw new \RuntimeException('Invalid audience');
-        }
-
-        return (array) $decoded;
+        return 'https://appleid.apple.com/auth/keys';
     }
 
-    private function getApplePublicKeys(): array
+    protected function issuers(): array
     {
-        $response = $this->httpClient->request(
-            'GET',
-            'https://appleid.apple.com/auth/keys'
-        );
-
-        $jwks = $response->toArray();
-
-        $keys = [];
-        foreach ($jwks['keys'] as $jwk) {
-            $keys[] = [
-                'publicKey' => JWK::parseKey([
-                    'kty' => $jwk['kty'],
-                    'n' => $jwk['n'],
-                    'e' => $jwk['e'],
-                ])
-            ];
-        }
-
-        return $keys;
+        return ['https://appleid.apple.com'];
     }
 }

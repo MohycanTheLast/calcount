@@ -3,10 +3,16 @@
 namespace App\Controller;
 
 use App\Entity\Security\User;
+use App\Entity\Security\UserIdentity;
+use App\Repository\UserIdentityRepository;
 use App\Repository\UserRepository;
 use App\Security\AccessTokenProvider;
 use App\Security\AppleIdTokenVerifier;
 use App\Security\GoogleIdTokenVerifier;
+use App\Security\InvalidIdTokenException;
+use App\Security\OidcIdTokenVerifier;
+use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,8 +24,11 @@ class SecurityController extends AbstractController
 {
     public function __construct(
         protected UserRepository $userRepository,
+        protected UserIdentityRepository $userIdentityRepository,
         protected UserPasswordHasherInterface $passwordHasher,
-        protected AccessTokenProvider $accessTokenProvider
+        protected AccessTokenProvider $accessTokenProvider,
+        protected EntityManagerInterface $entityManager,
+        protected LoggerInterface $logger,
     )
     {
     }
@@ -50,66 +59,61 @@ class SecurityController extends AbstractController
     }
 
     #[Route('/api/auth/apple', methods: ['POST'])]
-    public function appleLogin(
-        Request $request,
-        AppleIdTokenVerifier $verifier
-    ): JsonResponse {
-        $idToken = $request->toArray()['id_token'] ?? null;
-        if (!$idToken) {
-            return $this->json(['error' => 'Missing token'], 400);
-        }
-
-        $claims = $verifier->verify($idToken);
-
-        $appleId = $claims['sub'];
-        $email = $claims['email'] ?? null;
-
-        $user = $this->userRepository->findOneBy(['appleId' => $appleId]);
-
-        if (!$user) {
-            // fallback přes email (pokud už existuje účet)
-            if ($email) {
-                $user = $this->userRepository->findOneBy(['email' => $email]);
-            }
-
-            if (!$user) {
-                $user = new User();
-                $user->setEmail($email);
-            }
-
-            $user->setAppleId($appleId);
-            // TODO save
-//            $em->persist($user);
-//            $em->flush();
-        }
-
-        return $this->json($this->accessTokenProvider->get($user));
+    public function appleLogin(Request $request, AppleIdTokenVerifier $verifier): JsonResponse
+    {
+        return $this->oauthLogin($request, $verifier, UserIdentity::PROVIDER_APPLE);
     }
 
     #[Route('/api/auth/google', methods: ['POST'])]
-    public function googleLogin(
-        Request $request,
-        GoogleIdTokenVerifier $verifier
-    ): JsonResponse {
-        $claims = $verifier->verify(
-            $request->toArray()['id_token']
-        );
+    public function googleLogin(Request $request, GoogleIdTokenVerifier $verifier): JsonResponse
+    {
+        return $this->oauthLogin($request, $verifier, UserIdentity::PROVIDER_GOOGLE);
+    }
 
-        $googleId = $claims['sub'];
-        $email = $claims['email'];
-
-        $user = $this->userRepository->findOneBy(['googleId' => $googleId])
-            ?? $this->userRepository->findOneBy(['email' => $email]);
-
-        if (!$user) {
-            $user = new User();
-            $user->setEmail($email);
+    /**
+     * Přihlášení (a případně registrace) přes ID token externího poskytovatele.
+     *
+     * 1. Účet už je s poskytovatelem propojený (provider + sub) → přihlásit.
+     * 2. Jinak podle e-mailu – jen pokud ho poskytovatel ověřil (email_verified), jinak by šlo převzít
+     *    cizí účet s neověřeným e-mailem. Existující účet se propojí, neexistující se založí.
+     */
+    private function oauthLogin(Request $request, OidcIdTokenVerifier $verifier, string $provider): JsonResponse
+    {
+        if (!$verifier->isConfigured()) {
+            return $this->json(['error' => 'Not Found'], Response::HTTP_NOT_FOUND);
         }
 
-        $user->setGoogleId($googleId);
-        // TODO save
-//        $em->persist($user);
-//        $em->flush();
+        $idToken = $request->toArray()['id_token'] ?? null;
+        if (!is_string($idToken) || $idToken === '') {
+            return $this->json(['error' => 'Missing token'], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $claims = $verifier->verify($idToken);
+        } catch (InvalidIdTokenException $e) {
+            $this->logger->info('OAuth login rejected', ['provider' => $provider, 'reason' => $e->getMessage()]);
+
+            return $this->json(['error' => 'Invalid token'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $identity = $this->userIdentityRepository->findByProvider($provider, $claims['sub']);
+        if ($identity !== null) {
+            return $this->json($this->accessTokenProvider->get($identity->getUser()));
+        }
+
+        $email = $claims['email'] ?? null;
+        // Apple posílá email_verified jako string "true"
+        $emailVerified = filter_var($claims['email_verified'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        if (!is_string($email) || $email === '' || !$emailVerified) {
+            return $this->json(['error' => 'Unverified email'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $user = $this->userRepository->findOneBy(['email' => $email]) ?? (new User())->setEmail($email);
+        $user->linkIdentity($provider, $claims['sub'], $email);
+
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
 
         return $this->json($this->accessTokenProvider->get($user));
     }

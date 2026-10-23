@@ -23,10 +23,10 @@ class DietDiary
     protected string $content;
 
     #[ORM\Column(type: "integer", nullable: false)]
-    protected string $kcal;
+    protected int $kcal;
 
     #[ORM\Column(type: "integer", nullable: false)]
-    protected string $waterInMl;
+    protected int $waterInMl;
 
     #[ORM\Column(name: "update_at", type: "datetime", nullable: true)]
     protected \DateTimeInterface $updatedAt;
@@ -56,23 +56,23 @@ class DietDiary
         return $this;
     }
 
-    public function getKcal(): string
+    public function getKcal(): int
     {
         return $this->kcal;
     }
 
-    public function setKcal(string $kcal): DietDiary
+    public function setKcal(int $kcal): DietDiary
     {
         $this->kcal = $kcal;
         return $this;
     }
 
-    public function getWaterInMl(): string
+    public function getWaterInMl(): int
     {
         return $this->waterInMl;
     }
 
-    public function setWaterInMl(string $waterInMl): DietDiary
+    public function setWaterInMl(int $waterInMl): DietDiary
     {
         $this->waterInMl = $waterInMl;
         return $this;
