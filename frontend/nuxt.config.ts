@@ -5,6 +5,11 @@ export default defineNuxtConfig({
     compatibilityDate: "2025-07-15",
     devtools: { enabled: true },
     css: ['~/assets/css/main.css'],
+    // Komponenty se auto-importují i z features/ (např. features/diary/DiaryDayCards.vue → <DiaryDayCards>)
+    components: [
+        { path: '~/components', pathPrefix: false },
+        { path: '~/features', pathPrefix: false, extensions: ['vue'] },
+    ],
     vite: {
         plugins: [
             tailwindcss(),

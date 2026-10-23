@@ -1,14 +1,10 @@
-import type { CreatedEntry, DayEntry, DaySummary, EntryValues, PhotoAnalysis, RecentDay } from '~/api/types'
+import type { CreatedEntry, DayEntry, DaySummary, EntryValues, PhotoAnalysis } from '~/api/types'
 
 // Deník: záznamy jídla a pití a souhrny dní. Všechna volání jdou přes apiFetch (token, obnova session).
 export const useDiaryApi = () => {
     const { apiFetch } = useApiFetch()
 
     return {
-        // Zastaralé (/api/entries) – Deník přejde na getDays
-        getRecentDays: () =>
-            apiFetch<RecentDay[]>('/api/entries'),
-
         // from/to ve formátu YYYY-MM-DD, včetně; vrací každý den v rozsahu (i bez záznamu)
         getDays: (from: string, to: string) =>
             apiFetch<DaySummary[]>('/api/days', { query: { from, to } }),

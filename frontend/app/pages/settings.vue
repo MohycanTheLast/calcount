@@ -136,108 +136,13 @@
             </section>
         </main>
 
-        <!-- VÝPOČET BMR + VÁHA -->
-        <Transition name="cc-fade">
-            <div
-                v-if="showBmrCalc"
-                class="fixed inset-0 z-[60] bg-black/60 flex items-end sm:items-center justify-center overflow-hidden"
-                @click.self="closeBmrCalc"
-            >
-                <div
-                    class="w-full sm:max-w-md max-h-[92vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
-                    style="background: rgb(var(--cc-surface)); color: rgb(var(--cc-text)); border: 1px solid rgb(var(--cc-border));"
-                >
-                    <div class="px-4 cc-header" style="border-bottom: 1px solid rgb(var(--cc-border));">
-                        <div>
-                            <button type="button" class="cc-header-action" @click="closeBmrCalc">
-                                Zpět
-                            </button>
-                        </div>
-                        <div class="cc-header-title">Výpočet BMR</div>
-                        <div></div>
-                    </div>
-
-                    <div class="p-4 overflow-y-auto scroll-ios flex-1 space-y-5">
-                        <section class="space-y-3">
-                            <label class="block">
-                                <div class="text-xs cc-subtle mb-1">Pohlaví</div>
-                                <select v-model="bmr.sex" class="cc-input">
-                                    <option value="male">Muž</option>
-                                    <option value="female">Žena</option>
-                                </select>
-                            </label>
-
-                            <div class="grid grid-cols-3 gap-3">
-                                <label class="block">
-                                    <div class="text-xs cc-subtle mb-1">Věk</div>
-                                    <input
-                                        v-model.number="bmr.age"
-                                        type="number"
-                                        min="0"
-                                        inputmode="numeric"
-                                        class="cc-input"
-                                        placeholder="let"
-                                    />
-                                </label>
-
-                                <label class="block">
-                                    <div class="text-xs cc-subtle mb-1">Výška</div>
-                                    <input
-                                        v-model.number="bmr.heightCm"
-                                        type="number"
-                                        min="0"
-                                        inputmode="numeric"
-                                        class="cc-input"
-                                        placeholder="cm"
-                                    />
-                                </label>
-
-                                <label class="block">
-                                    <div class="text-xs cc-subtle mb-1">Váha</div>
-                                    <input
-                                        v-model.number="settings.weightKg"
-                                        type="number"
-                                        min="0"
-                                        step="any"
-                                        inputmode="decimal"
-                                        class="cc-input"
-                                        placeholder="kg"
-                                    />
-                                </label>
-                            </div>
-
-                            <label class="flex items-start gap-3 pt-1">
-                                <input v-model="settings.saveWeight" type="checkbox" class="mt-1" />
-                                <span class="text-sm">
-                                    Uložit váhu
-                                    <span class="block text-xs cc-subtle">např. pro pozdější porovnání</span>
-                                </span>
-                            </label>
-                        </section>
-
-                        <section class="space-y-2">
-                            <button type="button" class="w-full cc-btn-primary" @click="computeAndApplyBmr">
-                                Spočítat a vyplnit BMR
-                            </button>
-
-                            <p v-if="bmrError" class="text-sm text-red-400">
-                                {{ bmrError }}
-                            </p>
-
-                            <p class="text-xs cc-subtle">
-                                Použit vzorec Mifflin–St Jeor. Je to odhad.
-                            </p>
-                        </section>
-                    </div>
-
-                    <div class="pb-safe"></div>
-                </div>
-            </div>
-        </Transition>
+        <BmrCalculatorSheet v-model:open="showBmrCalc" />
     </div>
 </template>
 
 <script setup lang="ts">
+import { useDiaryMutations } from "~/features/diary/queries";
+
 definePageMeta({
     middleware: ['auth'],
     tabBar: true,
@@ -245,15 +150,9 @@ definePageMeta({
 
 const { settings, loaded, loading, saving, error, fetchFromApi, saveToApi } = useUserSettings()
 const { signOut } = useAuth()
+const { invalidateDiary } = useDiaryMutations()
 
 const showBmrCalc = ref(false)
-const bmrError = ref<string | null>(null)
-
-const bmr = ref({
-    sex: 'male' as 'male' | 'female',
-    age: null as number | null,
-    heightCm: null as number | null,
-})
 
 onMounted(async () => {
     try {
@@ -263,13 +162,11 @@ onMounted(async () => {
     }
 })
 
-onBeforeUnmount(() => {
-    document.body.classList.remove('overflow-hidden')
-})
-
 const onSave = async () => {
     try {
         await saveToApi()
+        // BMR a aktivita mění výdej dne – souhrny v Deníku se musí přepočítat
+        invalidateDiary()
         await navigateTo('/app')
     } catch {
         // error je už nastavený v composable
@@ -281,36 +178,6 @@ const onLogout = async () => {
 }
 
 const openBmrCalc = () => {
-    bmrError.value = null
     showBmrCalc.value = true
-    document.body.classList.add('overflow-hidden')
-}
-
-const closeBmrCalc = () => {
-    showBmrCalc.value = false
-    document.body.classList.remove('overflow-hidden')
-}
-
-const computeAndApplyBmr = () => {
-    bmrError.value = null
-
-    const age = bmr.value.age
-    const height = bmr.value.heightCm
-    const weight = settings.value.weightKg
-
-    if (!age || age <= 0 || !height || height <= 0 || !weight || weight <= 0) {
-        bmrError.value = 'Vyplň prosím věk, výšku a váhu (kladná čísla).'
-        return
-    }
-
-    // Mifflin–St Jeor:
-    // muž:   10W + 6.25H - 5A + 5
-    // žena:  10W + 6.25H - 5A - 161
-    const base = 10 * weight + 6.25 * height - 5 * age
-    const sexConst = bmr.value.sex === 'male' ? 5 : -161
-
-    settings.value.bmrKcal = Math.round(base + sexConst)
-
-    closeBmrCalc()
 }
 </script>

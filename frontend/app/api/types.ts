@@ -22,14 +22,6 @@ export type UserSettings = {
     activitySource?: ActivitySource
 }
 
-// GET /api/entries (zastaralé, nahrazuje ho /api/days)
-export type RecentDay = {
-    date: string // d.m.Y
-    kcal: number
-    kcalBurned: number
-    water: number // litry
-}
-
 // GET /api/days – jeden den (backend: App\Model\DaySummary)
 export type DaySummary = {
     date: string // YYYY-MM-DD

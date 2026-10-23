@@ -18,6 +18,13 @@ export const formatCzDate = (d: Date) => `${pad(d.getDate())}.${pad(d.getMonth()
 
 export const formatIsoDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 
+// Nové datum posunuté o `days` dní (záporné = do minulosti); původní datum nemění
+export const addDays = (d: Date, days: number) => {
+    const result = new Date(d)
+    result.setDate(result.getDate() + days)
+    return result
+}
+
 const isSameDay = (a: Date, b: Date) =>
     a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 

@@ -89,8 +89,7 @@ export const useAuth = () => {
 
         // Data předchozího uživatele nesmí zůstat v paměti pro dalšího (deník, nastavení).
         // Téma zůstává – patří zařízení a je uložené v localStorage.
-        useState('diary:entries').value = []
-        useState('diary:loaded').value = false
+        useNuxtApp().$queryClient.clear()
         useState('user:settings:loaded').value = false
     }
 

@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS: UserSettings = {
 }
 
 const THEME_STORAGE_KEY = 'cc_theme'
+const SETTINGS_QUERY_KEY = ['settings'] as const
 
 export const useUserSettings = () => {
     const settings = useState<UserSettings>('user:settings', () => ({ ...DEFAULT_SETTINGS }))
@@ -25,6 +26,7 @@ export const useUserSettings = () => {
     const error = useState<string | null>('user:settings:error', () => null)
 
     const settingsApi = useSettingsApi()
+    const queryClient = useNuxtApp().$queryClient
 
     // Téma se drží i v úložišti zařízení, aby se po načtení stránky aplikovalo hned, ještě před odpovědí API
     const loadThemeFromStorage = () => {
@@ -56,7 +58,13 @@ export const useUserSettings = () => {
         error.value = null
 
         try {
-            const res = await settingsApi.get()
+            // Přes cache dotazů: souběžná volání (start aplikace + stránka Nastavení) se sloučí do jednoho
+            // a při odhlášení se cache smaže. Formulář a téma dál pracují se stavem `settings`.
+            const res = await queryClient.fetchQuery({
+                queryKey: SETTINGS_QUERY_KEY,
+                queryFn: () => settingsApi.get(),
+                staleTime: 0,
+            })
 
             settings.value = { ...DEFAULT_SETTINGS, ...res, themeMode: normalizeThemeMode(res.themeMode) }
             loaded.value = true
@@ -77,10 +85,12 @@ export const useUserSettings = () => {
         error.value = null
 
         try {
-            await settingsApi.save({
+            const saved: UserSettings = {
                 ...settings.value,
                 weightKg: settings.value.saveWeight ? settings.value.weightKg : null,
-            })
+            }
+            await settingsApi.save(saved)
+            queryClient.setQueryData(SETTINGS_QUERY_KEY, saved)
 
             applyTheme()
             persistTheme()
@@ -92,25 +102,12 @@ export const useUserSettings = () => {
         }
     }
 
-    const ensureLoaded = async () => {
-        if (loaded.value || loading.value) return
-        await fetchFromApi().catch(() => {})
-    }
-
-    // Denní výdej z nastavení (BMR + průměrná aktivita); null, dokud není vyplněné BMR
-    const dailyExpenditureKcal = computed<number | null>(() => {
-        if (!loaded.value || !settings.value.bmrKcal) return null
-        return settings.value.bmrKcal + (settings.value.avgDailyActivityKcal ?? 0)
-    })
-
     return {
         settings,
         loaded,
         loading,
         saving,
         error,
-        dailyExpenditureKcal,
-        ensureLoaded,
         loadThemeFromStorage,
         applyTheme,
         fetchFromApi,
