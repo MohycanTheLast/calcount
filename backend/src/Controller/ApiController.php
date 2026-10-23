@@ -10,6 +10,7 @@ use App\Service\DietDiaryService;
 use App\Service\OpenAiClient;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,6 +21,9 @@ class ApiController extends AbstractController
 {
     // Delší text by zbytečně zvyšoval cenu volání AI (a do DB se stejně ukládá jen 255 znaků)
     private const MAX_FOOD_TEXT_LENGTH = 500;
+
+    private const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+    private const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
     public function __construct(
         protected OpenAiClient $openAiClient,
@@ -70,7 +74,7 @@ class ApiController extends AbstractController
         return new JsonResponse($resultData);
     }
 
-    #[Route('/api/save/{id}', methods: ['POST'])]
+    #[Route('/api/save/{id}', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function save(DietDiary $diaryRecord, Request $request): JsonResponse
     {
         $this->denyUnlessOwner($diaryRecord);
@@ -81,7 +85,7 @@ class ApiController extends AbstractController
         return new JsonResponse(status: Response::HTTP_ACCEPTED);
     }
 
-    #[Route('/api/delete/{id}', methods: ['POST'])]
+    #[Route('/api/delete/{id}', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function delete(DietDiary $diaryRecord): JsonResponse
     {
         $this->denyUnlessOwner($diaryRecord);
@@ -91,7 +95,7 @@ class ApiController extends AbstractController
         return new JsonResponse(status: Response::HTTP_ACCEPTED);
     }
 
-    #[Route('/api/diary-day/{date}', methods: ['GET'])]
+    #[Route('/api/diary-day/{date}', requirements: ['date' => '\d{4}-\d{2}-\d{2}'], methods: ['GET'])]
     public function dayItems(string $date): JsonResponse
     {
         $entries = $this->dietDiaryService->getEntriesByDateStr($date);
@@ -103,15 +107,31 @@ class ApiController extends AbstractController
     public function upload(Request $request): JsonResponse
     {
         $file = $request->files->get('file');
-        if (!$file) {
+        if (!$file instanceof UploadedFile || !$file->isValid()) {
             return new JsonResponse(['error' => 'Nebyl nahrán žádný soubor.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($file->getSize() > self::MAX_UPLOAD_BYTES) {
+            return new JsonResponse(
+                ['error' => sprintf('Fotka je příliš velká (max. %d MB).', self::MAX_UPLOAD_BYTES / 1024 / 1024)],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        // Typ podle obsahu souboru (ne podle přípony / hlavičky od klienta); jen formáty, které OpenAI přijímá.
+        // Přímo přes fileinfo – UploadedFile::getMimeType() vyžaduje balíček symfony/mime, který v projektu není.
+        $mimeType = (new \finfo(FILEINFO_MIME_TYPE))->file($file->getPathname());
+        if (!in_array($mimeType, self::ALLOWED_IMAGE_TYPES, true)) {
+            return new JsonResponse(
+                ['error' => 'Nepodporovaný formát fotky (povoleno JPEG, PNG, WebP, GIF).'],
+                Response::HTTP_UNSUPPORTED_MEDIA_TYPE
+            );
         }
 
         if (!$this->aiUsageLimiter->tryConsume($this->getAppUser())) {
             return $this->dailyLimitExceeded();
         }
 
-        $mimeType = $file->getMimeType() ?? 'image/jpeg';
         $imageData = base64_encode(file_get_contents($file->getPathname()));
 
         try {

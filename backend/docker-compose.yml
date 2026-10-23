@@ -18,7 +18,7 @@ services:
         environment:
             MYSQL_DATABASE: calcount
         ports:
-            - '3306:3306'
+            - '127.0.0.1:3306:3306' # DB jen z tohoto počítače, ne z celé sítě
         volumes:
             - calcount-mysql:/var/lib/mysql
 volumes:

@@ -1,6 +1,20 @@
 # Nastavení výchozího souboru, upřednostňuje index.html před index.php
 DirectoryIndex index.html index.php
 
+# Bezpečnostní hlavičky (platí pro SPA i API)
+<IfModule mod_headers.c>
+    # CSP: skripty, styly a požadavky jen z vlastní domény. 'unsafe-inline' u skriptů kvůli inline skriptům
+    # z buildu Nuxtu (téma v <head>, __NUXT__ konfigurace) – mění se s každým buildem, hash by nešel udržet.
+    # Až přibude přihlášení přes Google/Apple, doplnit jejich domény (script-src, frame-src, connect-src).
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(self), microphone=(self), geolocation=()"
+    # HSTS jen přes HTTPS (lokálně běží http)
+    Header always set Strict-Transport-Security "max-age=31536000" "expr=%{HTTPS} == 'on'"
+</IfModule>
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
 

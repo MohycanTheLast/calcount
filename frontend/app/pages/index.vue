@@ -87,8 +87,9 @@ const onEmailLogin = async () => {
     try {
         await signInWithEmail(email.value, password.value)
         await navigateTo('/app')
-    } catch {
-        error.value = 'Přihlášení se nepodařilo.'
+    } catch (e: any) {
+        // 429 = příliš mnoho neúspěšných pokusů – server vrací hlášku, kdy to zkusit znovu
+        error.value = e?.status === 429 && e?.data?.error ? e.data.error : 'Přihlášení se nepodařilo.'
     } finally {
         loading.value = false
     }

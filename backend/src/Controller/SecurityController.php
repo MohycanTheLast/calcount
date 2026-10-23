@@ -10,6 +10,7 @@ use App\Security\AccessTokenProvider;
 use App\Security\AppleIdTokenVerifier;
 use App\Security\GoogleIdTokenVerifier;
 use App\Security\InvalidIdTokenException;
+use App\Security\LoginThrottler;
 use App\Security\OidcIdTokenVerifier;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -29,6 +30,7 @@ class SecurityController extends AbstractController
         protected AccessTokenProvider $accessTokenProvider,
         protected EntityManagerInterface $entityManager,
         protected LoggerInterface $logger,
+        protected LoginThrottler $loginThrottler,
     )
     {
     }
@@ -39,21 +41,35 @@ class SecurityController extends AbstractController
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
 
-        if (!isset($data['email'], $data['password'])) {
+        if (!is_string($data['email'] ?? null) || !is_string($data['password'] ?? null)) {
             return $this->json(
                 ['error' => 'Missing credentials'],
                 Response::HTTP_BAD_REQUEST
             );
         }
 
-        $user = $this->userRepository->findOneBy(['email' => $data['email']]);
+        $email = $data['email'];
+        $ip = $request->getClientIp();
+
+        if ($this->loginThrottler->isBlocked($email, $ip)) {
+            return $this->json(
+                ['error' => sprintf('Příliš mnoho neúspěšných pokusů. Zkus to prosím za %d minut.', $this->loginThrottler->getWindowMinutes())],
+                Response::HTTP_TOO_MANY_REQUESTS
+            );
+        }
+
+        $user = $this->userRepository->findOneBy(['email' => $email]);
 
         if (!$user || !$this->passwordHasher->isPasswordValid($user, $data['password'])) {
+            $this->loginThrottler->registerFailure($email, $ip);
+
             return $this->json(
                 ['error' => 'Invalid credentials'],
                 Response::HTTP_UNAUTHORIZED
             );
         }
+
+        $this->loginThrottler->reset($email, $ip);
 
         return $this->json($this->accessTokenProvider->get($user));
     }

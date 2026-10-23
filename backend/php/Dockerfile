@@ -20,7 +20,7 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/html/www-root
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf && \
     sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 # Enable Apache mod rewrite and restart Apache
-RUN a2enmod rewrite && service apache2 restart
+RUN a2enmod rewrite headers && service apache2 restart
 
 # Change system timezone
 RUN cp /usr/share/zoneinfo/Europe/Prague /etc/localtime && \

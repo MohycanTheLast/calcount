@@ -2,13 +2,11 @@
 
 namespace App\Service;
 
-use App\Entity\Burned;
 use App\Entity\DietDiary;
 use App\Entity\Security\User;
 use App\Model\DietDiaryEntry;
 use App\Model\DietDiaryEntryDay;
 use App\Model\DietRecord;
-use App\Repository\BurnedRepository;
 use App\Repository\DietDiaryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -73,20 +71,11 @@ class DietDiaryService
         /** @var DietDiaryRepository $dietDiaryRepo */
         $dietDiaryRepo = $this->entityManager->getRepository(DietDiary::class);
 
-        /** @var BurnedRepository $burnedRepo */
-        $burnedRepo = $this->entityManager->getRepository(Burned::class);
-
         // Načtení agregovaných hodnot pro DietDiary
         $dietDiaryEntries = $dietDiaryRepo->getAggregatedEntriesByDay($this->getLoggedUser());
 
-        // Načtení agregovaných spálených kalorií
-        $burnedEntries = $burnedRepo->getAggregatedBurnedCaloriesByDay(); // TODO
-
-        // Mapování spálených kalorií na datum
-        $burnedByDate = [];
-        foreach ($burnedEntries as $burned) {
-            $burnedByDate[$burned['entryDate']] = $burned['totalBurnedKcal'];
-        }
+        // Zapsaný výdej (tabulka Burned) se nepoužívá: nemá vazbu na uživatele, takže by se sčítal výdej
+        // všech uživatelů. Nahradí ho výdej podle zdroje (backlog F3), do té doby kcalBurned = 0.
 
         // Vytvoření pole DietDiaryEntry
         $entries = [];
@@ -97,7 +86,7 @@ class DietDiaryService
             $entries[] = new DietDiaryEntryDay(
                 date: (new \DateTime($date))->format('d.m.Y'),
                 kcal: $entry['totalKcal'],
-                kcalBurned: $burnedByDate[$date] ?? 0, // Spálené kalorie nebo 0
+                kcalBurned: 0,
                 water: round($entry['totalWater'] / 1000, 2) // Voda v litrech
             );
         }
