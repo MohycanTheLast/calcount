@@ -145,7 +145,7 @@ import { useDiaryMutations } from "~/features/diary/queries";
 
 definePageMeta({
     middleware: ['auth'],
-    tabBar: true,
+    layout: 'tabs',
 })
 
 const { settings, loaded, loading, saving, error, fetchFromApi, saveToApi } = useUserSettings()

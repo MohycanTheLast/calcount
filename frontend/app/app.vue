@@ -7,25 +7,20 @@
                 <p class="text-sm cc-subtle">Načítám...</p>
             </div>
         </div>
-        <template v-else>
-            <!-- Vlastní obal: přechod stránek (out-in) vkládá novou stránku až po odchodu staré.
-                 Bez obalu by se mezitím vložil/odebral tab bar vedle ní a Vue by spadlo na insertBefore. -->
-            <div>
+        <!-- Vlastní obal: přechod stránek (out-in) vkládá novou stránku až po odchodu staré.
+             Bez stabilního rodiče by Vue při současné změně okolí spadlo na insertBefore. -->
+        <div v-else>
+            <!-- Tab bar je v layouts/tabs.vue; stránky si layout volí přes definePageMeta({ layout }) -->
+            <NuxtLayout>
                 <NuxtPage/>
-            </div>
-
-            <!-- Tab bar mimo stránku, aby při přechodu mezi záložkami neproblikával -->
-            <Transition name="cc-fade">
-                <AppTabBar v-if="route.meta.tabBar"/>
-            </Transition>
-        </template>
+            </NuxtLayout>
+        </div>
     </div>
 </template>
 <script setup lang="ts">
 // Root shell aplikace – sem se nedává konkrétní obsah typu <Main />.
 // Obsah se rendruje podle rout z /pages přes <NuxtPage />.
 
-const route = useRoute()
 const { isAuthenticated, loadFromStorage, hasValidAccessToken, refreshAccessToken } = useAuth()
 const { fetchFromApi } = useUserSettings()
 const authChecking = ref(true)

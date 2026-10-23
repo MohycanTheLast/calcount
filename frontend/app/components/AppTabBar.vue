@@ -6,8 +6,8 @@
                 :key="tab.to"
                 :to="tab.to"
                 class="cc-tab"
-                :class="{ 'cc-tab--active': route.path === tab.to }"
-                :aria-current="route.path === tab.to ? 'page' : undefined"
+                :class="{ 'cc-tab--active': isActive(tab.to) }"
+                :aria-current="isActive(tab.to) ? 'page' : undefined"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path :d="tab.icon" />
@@ -21,6 +21,11 @@
 <script setup lang="ts">
 const route = useRoute()
 
+// Záložka je aktivní i pro podstránky (např. /stats/… pod /stats)
+const isActive = (to: string) => route.path === to || route.path.startsWith(`${to}/`)
+
+// Jediné místo se seznamem záložek. Nová záložka = položka sem + stránka s definePageMeta({ layout: 'tabs' }).
+// Počítá se se 4: Deník, Kalendář, Statistiky, Nastavení.
 const tabs = [
     {
         to: '/app',

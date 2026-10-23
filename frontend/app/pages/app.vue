@@ -39,7 +39,7 @@ import type { LastEntry } from "~/features/diary/LastEntryCard.vue";
 
 definePageMeta({
     middleware: ['auth'],
-    tabBar: true,
+    layout: 'tabs',
 })
 
 const lastEntry = ref<LastEntry | null>(null)
