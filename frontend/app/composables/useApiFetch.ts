@@ -1,3 +1,5 @@
+import { getApiBase } from '~/api/client'
+
 type ApiFetchOptions = {
     method?: string
     headers?: Record<string, string>
@@ -5,12 +7,14 @@ type ApiFetchOptions = {
     query?: Record<string, any>
 }
 
+// Volání backendu s přístupovým tokenem. Komponenty ho nepoužívají přímo, ale přes api/ (useDiaryApi, …).
 export const useApiFetch = () => {
     const { getValidAccessToken, refreshAccessToken, accessToken, isAuthenticated, signOut } = useAuth()
 
     const request = <T>(url: string, options: ApiFetchOptions, token: string | null) =>
         $fetch<T>(url, {
             ...options,
+            baseURL: getApiBase(),
             headers: {
                 ...(options.headers ?? {}),
                 Authorization: `Bearer ${token}`,

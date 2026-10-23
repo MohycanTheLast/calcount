@@ -1,12 +1,10 @@
-export type DayEntry = {
-    id: number
-    text: string
-    kcal: number
-    water: number // ml
-}
+import { useDiaryApi } from '~/api/diary'
+import type { DayEntry, EntryValues } from '~/api/types'
+
+export type { DayEntry } from '~/api/types'
 
 export const useDayEntries = () => {
-    const { apiFetch } = useApiFetch()
+    const diaryApi = useDiaryApi()
 
     const dayEntries = ref<DayEntry[]>([]);
     const loading = ref(false);
@@ -18,7 +16,7 @@ export const useDayEntries = () => {
         error.value = null;
 
         try {
-            dayEntries.value = await apiFetch<DayEntry[]>(`/api/diary-day/${date}`);
+            dayEntries.value = await diaryApi.getDayEntries(date);
         } catch (e) {
             error.value = 'Nepodařilo se načíst detail záznamů';
         } finally {
@@ -26,17 +24,14 @@ export const useDayEntries = () => {
         }
     };
 
-    const updateEntry = async (entry: DayEntry, values: { kcal: number; waterInMl: number }) => {
-        await apiFetch(`/api/save/${entry.id}`, {
-            method: 'POST',
-            body: values,
-        })
+    const updateEntry = async (entry: DayEntry, values: EntryValues) => {
+        await diaryApi.updateEntry(entry.id, values)
         entry.kcal = values.kcal
         entry.water = values.waterInMl
     }
 
     const deleteEntry = async (entry: DayEntry) => {
-        await apiFetch(`/api/delete/${entry.id}`, { method: 'POST' })
+        await diaryApi.deleteEntry(entry.id)
         dayEntries.value = dayEntries.value.filter((e) => e.id !== entry.id)
     }
 

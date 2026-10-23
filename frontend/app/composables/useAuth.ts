@@ -1,3 +1,8 @@
+import { authApi } from '~/api/auth'
+import { appStorage } from '~/lib/storage'
+
+const AUTH_STORAGE_KEY = 'cc_auth'
+
 export type AuthUser = {
     id: string
     email?: string
@@ -36,7 +41,7 @@ export const useAuth = () => {
 
     const loadFromStorage = () => {
         if (!import.meta.client) return
-        const raw = localStorage.getItem('cc_auth')
+        const raw = appStorage.get(AUTH_STORAGE_KEY)
         if (!raw) {
             // Paměť a storage se ukládají společně, chybějící záznam = odhlášení (např. v jiné záložce)
             accessToken.value = null
@@ -61,7 +66,7 @@ export const useAuth = () => {
         if (!import.meta.client) return
 
         if (!refreshToken.value) {
-            localStorage.removeItem('cc_auth')
+            appStorage.remove(AUTH_STORAGE_KEY)
             return
         }
 
@@ -72,7 +77,7 @@ export const useAuth = () => {
             user: user.value,
         }
 
-        localStorage.setItem('cc_auth', JSON.stringify({ session }))
+        appStorage.set(AUTH_STORAGE_KEY, JSON.stringify({ session }))
     }
 
     const clearSession = () => {
@@ -103,19 +108,7 @@ export const useAuth = () => {
     }
 
     const signInWithEmail = async (email: string, password: string) => {
-        // Backend: { access_token, refresh_token, expires_in }
-        // Volitelně může posílat i user (pokud máš).
-        const res = await $fetch<{
-            access_token: string
-            refresh_token: string
-            expires_in: number
-            user?: AuthUser
-        }>('/api/login', {
-            method: 'POST',
-            body: { email, password },
-        })
-
-        setTokensFromBackend(res)
+        setTokensFromBackend(await authApi.login(email, password))
     }
 
     // Při odmítnutí refresh tokenu serverem session smaže; při síťové chybě ji nechá a jen vyhodí chybu.
@@ -136,14 +129,7 @@ export const useAuth = () => {
             if (!refreshToken.value) throw new Error('Missing refresh token')
 
             try {
-                const res = await $fetch<{
-                    access_token: string
-                    refresh_token: string
-                    expires_in: number
-                }>('/api/token/refresh', {
-                    method: 'POST',
-                    body: { refresh_token: refreshToken.value },
-                })
+                const res = await authApi.refresh(refreshToken.value)
 
                 setTokensFromBackend({
                     ...res,
@@ -178,10 +164,7 @@ export const useAuth = () => {
 
         try {
             if (rt) {
-                await $fetch('/api/token/invalidate', {
-                    method: 'POST',
-                    body: { refresh_token: rt },
-                })
+                await authApi.invalidate(rt)
             }
         } catch {
             // záměrně ignorujeme – i když invalidate selže, chceme uživatele lokálně odhlásit

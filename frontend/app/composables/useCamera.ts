@@ -1,12 +1,13 @@
 import { ref } from 'vue'
+import { useDiaryApi } from '~/api/diary'
 
-export function useCamera(apiUrl: string) {
+export function useCamera() {
     const photo = ref<File | null>(null) // Uložený obrázek
     const error = ref<string | null>(null) // Chyby při práci s kamerou
     const loading = ref(false) // Stav během nahrávání fotografie
     const capturedImageURL = ref<string | null>(null) // URL pro náhled snímku
 
-    const { apiFetch } = useApiFetch()
+    const diaryApi = useDiaryApi()
 
     // Funkce pro otevření kamery a zachycení fotografie
     const openCamera = async () => {
@@ -42,8 +43,8 @@ export function useCamera(apiUrl: string) {
 
     // Funkce pro odeslání fotografie na BE
     const uploadPhoto = async () => {
-        if (!photo.value || !apiUrl) {
-            error.value = 'Neexistuje žádná fotografie k odeslání nebo chybí API URL.'
+        if (!photo.value) {
+            error.value = 'Neexistuje žádná fotografie k odeslání.'
             return
         }
 
@@ -51,15 +52,7 @@ export function useCamera(apiUrl: string) {
         error.value = null
 
         try {
-            const formData = new FormData()
-            formData.append('file', photo.value)
-
-            const result = await apiFetch(apiUrl, {
-                method: 'POST',
-                body: formData,
-            })
-
-            return result
+            return await diaryApi.uploadPhoto(photo.value)
         } catch (err: any) {
             error.value = err?.data?.error ?? 'Chyba při odesílání fotografie.'
             console.error(err)

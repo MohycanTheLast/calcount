@@ -1,13 +1,10 @@
-// Denní souhrn z GET /api/entries (backend: DietDiaryEntryDay)
-export type DiaryDay = {
-    date: string // d.m.Y
-    kcal: number
-    kcalBurned: number
-    water: number // litry
-}
+import { useDiaryApi } from '~/api/diary'
+import type { RecentDay } from '~/api/types'
+
+export type DiaryDay = RecentDay
 
 export const useEntries = () => {
-    const { apiFetch } = useApiFetch()
+    const diaryApi = useDiaryApi()
 
     // Sdílený stav: při návratu na Deník se hned zobrazí poslední data a obnoví se na pozadí,
     // takže obrazovka při přechodu neposkakuje kvůli načítání.
@@ -21,7 +18,7 @@ export const useEntries = () => {
         error.value = null
 
         try {
-            entries.value = await apiFetch<DiaryDay[]>('/api/entries')
+            entries.value = await diaryApi.getRecentDays()
             loaded.value = true
         } catch (e) {
             error.value = 'Nepodařilo se načíst data'

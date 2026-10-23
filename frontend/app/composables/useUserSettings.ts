@@ -1,38 +1,20 @@
-export type ThemeMode = 'system' | 'light' | 'dark'
+import { useSettingsApi } from '~/api/settings'
+import type { UserSettings } from '~/api/types'
+import { appStorage } from '~/lib/storage'
+import { DEFAULT_THEME_MODE, THEME_COLORS, normalizeThemeMode, resolveEffectiveTheme } from '~/utils/theme'
 
-export type AiCommentMode =
-    | 'none'
-    | 'brief_health'
-    | 'funny'
-    | 'praise_or_criticize'
-    | 'random'
-
-export type UserSettings = {
-    bmrKcal: number | null
-    avgDailyActivityKcal: number | null
-    themeMode: ThemeMode
-    aiCommentMode: AiCommentMode
-    weightKg: number | null
-    saveWeight: boolean
-}
+export type { AiCommentMode, ThemeMode, UserSettings } from '~/api/types'
 
 const DEFAULT_SETTINGS: UserSettings = {
     bmrKcal: null,
     avgDailyActivityKcal: null,
-    themeMode: 'dark',
+    themeMode: DEFAULT_THEME_MODE,
     aiCommentMode: 'none',
     weightKg: null,
     saveWeight: false,
 }
 
 const THEME_STORAGE_KEY = 'cc_theme'
-const THEME_MODES: ThemeMode[] = ['system', 'light', 'dark']
-
-// Barvy pozadí (--cc-bg) pro <meta name="theme-color"> – lišta prohlížeče/PWA ladí s tématem aplikace
-const THEME_COLORS = { light: '#f8fafc', dark: '#020617' }
-
-const normalizeThemeMode = (value: unknown): ThemeMode =>
-    THEME_MODES.includes(value as ThemeMode) ? value as ThemeMode : DEFAULT_SETTINGS.themeMode
 
 export const useUserSettings = () => {
     const settings = useState<UserSettings>('user:settings', () => ({ ...DEFAULT_SETTINGS }))
@@ -42,39 +24,26 @@ export const useUserSettings = () => {
     const saving = useState<boolean>('user:settings:saving', () => false)
     const error = useState<string | null>('user:settings:error', () => null)
 
-    const { apiFetch } = useApiFetch()
+    const settingsApi = useSettingsApi()
 
-    // Téma se drží i v localStorage, aby se po načtení stránky aplikovalo hned, ještě před odpovědí API
+    // Téma se drží i v úložišti zařízení, aby se po načtení stránky aplikovalo hned, ještě před odpovědí API
     const loadThemeFromStorage = () => {
         if (!import.meta.client) return
-        try {
-            settings.value.themeMode = normalizeThemeMode(localStorage.getItem(THEME_STORAGE_KEY))
-        } catch {
-            // storage nemusí být dostupné (private mode)
-        }
+        settings.value.themeMode = normalizeThemeMode(appStorage.get(THEME_STORAGE_KEY))
     }
 
     const persistTheme = () => {
         if (!import.meta.client) return
-        try {
-            localStorage.setItem(THEME_STORAGE_KEY, settings.value.themeMode)
-        } catch {
-            // storage nemusí být dostupné (private mode)
-        }
+        appStorage.set(THEME_STORAGE_KEY, settings.value.themeMode)
     }
 
     const applyTheme = () => {
         if (!import.meta.client) return
 
-        const root = document.documentElement
         const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ?? false
+        const effective = resolveEffectiveTheme(settings.value.themeMode, prefersDark)
 
-        const effective =
-            settings.value.themeMode === 'system'
-                ? (prefersDark ? 'dark' : 'light')
-                : settings.value.themeMode
-
-        root.classList.toggle('dark', effective === 'dark')
+        document.documentElement.classList.toggle('dark', effective === 'dark')
 
         document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
             meta.removeAttribute('media')
@@ -87,9 +56,7 @@ export const useUserSettings = () => {
         error.value = null
 
         try {
-            const res = await apiFetch<Partial<UserSettings>>('/api/user/settings', {
-                method: 'GET',
-            })
+            const res = await settingsApi.get()
 
             settings.value = { ...DEFAULT_SETTINGS, ...res, themeMode: normalizeThemeMode(res.themeMode) }
             loaded.value = true
@@ -110,15 +77,9 @@ export const useUserSettings = () => {
         error.value = null
 
         try {
-            const payload: UserSettings = {
+            await settingsApi.save({
                 ...settings.value,
-                saveWeight: settings.value.saveWeight,
                 weightKg: settings.value.saveWeight ? settings.value.weightKg : null,
-            }
-
-            await apiFetch('/api/user/settings', {
-                method: 'POST',
-                body: payload,
             })
 
             applyTheme()

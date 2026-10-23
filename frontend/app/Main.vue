@@ -177,8 +177,8 @@
 <script setup lang="ts">
 import {useSpeechToText} from "~/composables/useSpeechToText";
 import Diary from "~/Diary.vue";
-import {useApiFetch} from "~/composables/useApiFetch";
-const { apiFetch } = useApiFetch()
+import { useDiaryApi } from "~/api/diary";
+const diaryApi = useDiaryApi()
 
 const diaryRefreshToken = ref(0);
 
@@ -238,13 +238,13 @@ const {
     loading: cameraLoading,
     openCamera,
     uploadPhoto
-} = useCamera('/api/upload')
+} = useCamera()
 
 // Aktivace fotoaparátu a zpracování snímku
 const handleOpenCamera = async () => {
     const capturedPhoto = await openCamera()
     if (capturedPhoto) {
-        const result = await uploadPhoto() as any
+        const result = await uploadPhoto()
         if (result?.food) {
             text.value = result.food
         }
@@ -281,12 +281,7 @@ const onSubmit = async () => {
     error.value = null
 
     try {
-        const res = await apiFetch<{ kcal: number; waterInMl: number; id: number; comment?: string | null }>('/api/calculate', {
-            method: 'POST',
-            body: {
-                food: text.value,
-            },
-        })
+        const res = await diaryApi.createEntry(text.value)
 
         result.value = {
             kcal: res.kcal,
@@ -318,12 +313,9 @@ const saveUpdated = async () => {
     error.value = null
 
     try {
-        await apiFetch('/api/save/' + recordId.value, {
-            method: 'POST',
-            body: {
-                kcal: kcal.value,
-                waterInMl: waterInL.value * 1000,
-            },
+        await diaryApi.updateEntry(recordId.value, {
+            kcal: kcal.value,
+            waterInMl: Math.round(waterInL.value * 1000),
         })
 
         result.value = { kcal: kcal.value, water: waterInL.value, originText: text.value, message: 'Upravené hodnoty byly uloženy'}
@@ -347,9 +339,7 @@ const onDelete = async () => {
     error.value = null
 
     try {
-        await apiFetch('/api/delete/' + recordId.value, {
-            method: 'POST'
-        })
+        await diaryApi.deleteEntry(recordId.value)
         result.value = null
         showConfirmation('Záznam byl odstraněn')
         refreshDiary()

@@ -11,6 +11,12 @@ export default defineNuxtConfig({
         ],
     },
     ssr: false,        // čisté SPA
+    runtimeConfig: {
+        public: {
+            // Adresa backendu (api/client.ts): '' = stejný origin; pro nativní aplikaci NUXT_PUBLIC_API_BASE při buildu
+            apiBase: '',
+        },
+    },
     nitro: {
         preset: 'static',
         devProxy: {
