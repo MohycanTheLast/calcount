@@ -51,6 +51,10 @@ class UserSettings
     #[ORM\Column(length: 20, nullable: false, options: ['default' => self::ACTIVITY_SOURCE_STATIC])]
     protected string $activitySource = self::ACTIVITY_SOURCE_STATIC;
 
+    // Pokročilé: u zadávání jídla i tlačítko pro výběr fotky z galerie (jinak jen vyfocení)
+    #[ORM\Column(type: "boolean", nullable: false, options: ['default' => false])]
+    protected bool $photoGalleryEnabled = false;
+
     #[ORM\Column(name: "update_at", type: "datetime", nullable: true)]
     protected \DateTimeInterface $updatedAt;
 
@@ -74,6 +78,17 @@ class UserSettings
         }
 
         $this->activitySource = $activitySource;
+        return $this;
+    }
+
+    public function isPhotoGalleryEnabled(): bool
+    {
+        return $this->photoGalleryEnabled;
+    }
+
+    public function setPhotoGalleryEnabled(bool $photoGalleryEnabled): UserSettings
+    {
+        $this->photoGalleryEnabled = $photoGalleryEnabled;
         return $this;
     }
 

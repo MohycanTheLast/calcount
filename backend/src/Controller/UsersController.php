@@ -66,6 +66,11 @@ class UsersController extends AbstractController
                 $userSettings->setActivitySource($requestData['activitySource']);
             }
 
+            // Volitelné (starší verze frontendu ho neposílá) – výběr fotky z galerie
+            if (isset($requestData['photoGalleryEnabled'])) {
+                $userSettings->setPhotoGalleryEnabled($requestData['photoGalleryEnabled'] === true);
+            }
+
             $entityManager->persist($userSettings);
             $entityManager->flush();
 

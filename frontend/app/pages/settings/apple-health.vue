@@ -3,11 +3,11 @@
         <header class="cc-nav">
             <div class="cc-container cc-header">
                 <div>
-                    <NuxtLink to="/settings" class="cc-header-action -ml-1">
+                    <NuxtLink to="/settings/advanced" class="cc-header-action -ml-1">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                             <path d="M15.7 4.3a1 1 0 0 1 0 1.4L9.42 12l6.3 6.3a1 1 0 0 1-1.42 1.4l-7-7a1 1 0 0 1 0-1.4l7-7a1 1 0 0 1 1.4 0Z"/>
                         </svg>
-                        Nastavení
+                        Pokročilé
                     </NuxtLink>
                 </div>
                 <h1 class="cc-header-title">Apple Zdraví</h1>
@@ -105,7 +105,7 @@
                     </p>
                     <p>
                         Aktuální zdroj aktivních kalorií: <strong>{{ sourceLabel }}</strong>.
-                        Změníš ho v <NuxtLink to="/settings">Nastavení</NuxtLink>.
+                        Změníš ho v <NuxtLink to="/settings/advanced">pokročilém nastavení</NuxtLink>.
                     </p>
                 </div>
             </section>

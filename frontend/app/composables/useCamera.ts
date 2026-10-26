@@ -8,6 +8,9 @@ const UPLOAD_RETRY_DELAY_MS = 800
 // Síťová chyba = server vůbec neodpověděl (chybí HTTP status)
 const isNetworkError = (err: any) => !err?.status
 
+// camera = rovnou fotoaparát, gallery = výběr hotové fotky (pokročilé nastavení photoGalleryEnabled)
+export type PhotoSource = 'camera' | 'gallery'
+
 export function useCamera() {
     const photo = ref<File | null>(null) // Uložený obrázek
     const error = ref<string | null>(null) // Chyby při práci s kamerou
@@ -34,7 +37,6 @@ export function useCamera() {
         const input = document.createElement('input')
         input.type = 'file'
         input.accept = 'image/*'
-        input.capture = 'environment' // Upřesňuje použití zadní kamery
         input.tabIndex = -1
         input.setAttribute('aria-hidden', 'true')
         // Neviditelný, ale ne display: none – kvůli spolehlivému click() ve starších prohlížečích
@@ -55,14 +57,17 @@ export function useCamera() {
         fileInput = null
     })
 
-    // Funkce pro otevření kamery a zachycení fotografie
-    const openCamera = async () => {
+    // Vyfocení jídla, nebo výběr hotové fotky z galerie (zapsat jídlo i později)
+    const openCamera = async (source: PhotoSource = 'camera') => {
         try {
             const input = getFileInput()
             // Předchozí nedokončené otevření (zavřené bez události) už nečeká
             settle(null)
             // Vyprázdnit, aby „change“ přišel i pro stejný soubor jako minule
             input.value = ''
+            // capture otevře rovnou zadní fotoaparát; bez něj telefon nabídne knihovnu fotek
+            if (source === 'camera') input.setAttribute('capture', 'environment')
+            else input.removeAttribute('capture')
 
             const file = await new Promise<File | null>((resolve) => {
                 pendingResolve = resolve

@@ -20,6 +20,7 @@ export type UserSettings = {
     weightKg: number | null
     saveWeight: boolean
     activitySource?: ActivitySource
+    photoGalleryEnabled?: boolean // pokročilé: u zadávání jídla i výběr fotky z galerie
 }
 
 // GET /api/days – jeden den (backend: App\Model\DaySummary)

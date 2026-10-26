@@ -65,6 +65,22 @@
                     </svg>
                 </button>
 
+                <!-- Fotka vyfocená dřív – jen se zapnutým pokročilým nastavením -->
+                <button
+                    v-if="settings.photoGalleryEnabled"
+                    type="button"
+                    class="cc-icon-btn disabled:opacity-50"
+                    style="color: rgb(var(--cc-accent));"
+                    :disabled="cameraLoading"
+                    title="Vybrat fotku z galerie"
+                    aria-label="Vybrat fotku z galerie"
+                    @click="handleOpenCamera('gallery')"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M5 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3H5Zm10.5 4a2 2 0 1 1 0 4 2 2 0 0 1 0-4ZM4 17.3l4.3-5.6a1 1 0 0 1 1.57-.04l3.13 3.74 1.8-2.1a1 1 0 0 1 1.52 0L20 17.6V18a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-.7Z"/>
+                    </svg>
+                </button>
+
                 <button
                     type="button"
                     class="cc-icon-btn disabled:opacity-50"
@@ -73,7 +89,7 @@
                     title="Vyfotit jídlo"
                     aria-label="Vyfotit jídlo"
                     data-tour="entry-photo"
-                    @click="handleOpenCamera"
+                    @click="handleOpenCamera('camera')"
                 >
                     <svg v-if="!cameraLoading" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                         <path d="M9 3a1 1 0 0 0-.8.4L6.5 5.5H5a3 3 0 0 0-3 3V18a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V8.5a3 3 0 0 0-3-3h-1.5l-1.7-2.1A1 1 0 0 0 15 3H9Zm3 16a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z"/>
@@ -109,7 +125,7 @@
 <script setup lang="ts">
 import type { CreatedEntry } from "~/api/types";
 import { useDiaryMutations } from "~/features/diary/queries";
-
+import type { PhotoSource } from "~/composables/useCamera";
 // Zadání nového záznamu textem, hlasem nebo fotkou. Po uložení vyšle „created“ s výsledkem od AI.
 const props = defineProps<{
     // Den, ke kterému se záznam zapíše (YYYY-MM-DD) – zpětný zápis z detailu dne; bez něj dnešek
@@ -121,6 +137,7 @@ const emit = defineEmits<{
 }>();
 
 const { createEntry } = useDiaryMutations();
+const { settings } = useUserSettings();
 
 const text = ref('')
 const error = ref<string | null>(null)
@@ -181,9 +198,9 @@ const {
 
 const photoRecognized = ref(false)
 
-// Aktivace fotoaparátu a zpracování snímku – rozpoznané jídlo se jen doplní do pole, uživatel ho může upravit
-const handleOpenCamera = async () => {
-    const capturedPhoto = await openCamera()
+// Vyfocení nebo fotka z galerie a její rozpoznání – rozpoznané jídlo se jen doplní do pole, uživatel ho může upravit
+const handleOpenCamera = async (source: PhotoSource) => {
+    const capturedPhoto = await openCamera(source)
     if (capturedPhoto) {
         photoRecognized.value = false
         const result = await uploadPhoto()

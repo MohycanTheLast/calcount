@@ -47,12 +47,14 @@ middleware/   auth (přihlášení), transition.global (směr přechodu detail �
 - **Záložky:** Deník (posledních 7 dní, za nejstarší kartou odkaz do kalendáře), Kalendář (měsíc v URL `?m=YYYY-MM`,
   barvy dnů podle bilance), Nastavení. Nová záložka = položka v seznamu v `AppTabBar.vue` + stránka
   s `definePageMeta({ layout: 'tabs' })` + název routy v SPA přesměrování v `backend/www-root/.htaccess`.
-  Podstránky nastavení jsou v `pages/settings/` (např. `/settings/apple-health` – tokeny a návod pro Zkratky).
+  Podstránky nastavení jsou v `pages/settings/`. Základní Nastavení má být co nejjednodušší – méně častá nastavení patří
+  do `/settings/advanced` (Pokročilá nastavení: zdroj aktivních kalorií, Propojení → `/settings/apple-health`
+  s tokeny a návodem pro Zkratky, výběr fotky z galerie `photoGalleryEnabled`).
 - **Úvodní průvodce** (`features/onboarding`): nový účet (`/api/user/me` → `onboardingCompleted: false`) uvidí
   v Deníku uvítání a pak průvodce – zvýrazní prvky s atributem `data-tour` (kroky v `steps.ts`, krok bez prvku
   na stránce se vynechá). Dokončení i přeskočení se uloží na server (`POST /api/user/onboarding`), znovu ho jde
   spustit v Nastavení → Účet. Nový prvek do průvodce = atribut `data-tour` + krok v `steps.ts`.
-- **Aktivní kalorie:** zdroj se volí v Nastavení (`activitySource`), konkrétní den jde ručně upravit v detailu dne
+- **Aktivní kalorie:** zdroj se volí v pokročilém nastavení (`activitySource`), konkrétní den jde ručně upravit v detailu dne
   (`DayExpenditureCard`). Ikona u výdeje v `DaySummary` ukazuje Apple Zdraví (hodinky) nebo ruční úpravu (tužka).
 - **Přechody stránek** běží v režimu `out-in`. Stránka musí mít v `app.vue` i v layoutu vlastní obalový
   element – jinak Vue při současné změně okolí (tab bar) vloží novou stránku na špatné místo nebo spadne
@@ -75,7 +77,7 @@ middleware/   auth (přihlášení), transition.global (směr přechodu detail �
 |---|---|
 | `user` | účet; `password` může být prázdné u účtu jen přes externí přihlášení; `created_at`, `email_verified_at`, souhlas s podmínkami (`terms_accepted_at`, `terms_version`), `onboarding_completed_at` |
 | `user_identity` | propojené externí účty (provider + `sub`), víc na uživatele |
-| `user_settings` | 1:1 s uživatelem – BMR, průměrná aktivita, téma, režim komentáře AI, `activity_source` |
+| `user_settings` | 1:1 s uživatelem – BMR, průměrná aktivita, téma, režim komentáře AI, `activity_source`, `photo_gallery_enabled` |
 | `diet_record` | záznam jídla/pití: text, kcal, voda (ml), **`entry_date`** (den, ke kterému patří) |
 | `activity_energy` | aktivní kalorie za den a zdroj (`manual`, `apple_health`, `strava`), unikátní (uživatel, den, zdroj) |
 | `refresh_tokens` | refresh tokeny (gesdinet) |

@@ -13,6 +13,7 @@ const DEFAULT_SETTINGS: UserSettings = {
     weightKg: null,
     saveWeight: false,
     activitySource: 'static',
+    photoGalleryEnabled: false,
 }
 
 const THEME_STORAGE_KEY = 'cc_theme'
