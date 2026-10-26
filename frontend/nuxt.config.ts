@@ -1,5 +1,9 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from "@tailwindcss/vite";
+import packageJson from "./package.json";
+
+// Verze aplikace – jediný zdroj je package.json (zobrazuje se v Nastavení → O aplikaci, viz docs/operations.md)
+const { version } = packageJson;
 
 export default defineNuxtConfig({
     compatibilityDate: "2025-07-15",
@@ -22,6 +26,9 @@ export default defineNuxtConfig({
         public: {
             // Adresa backendu (api/client.ts): '' = stejný origin; pro nativní aplikaci NUXT_PUBLIC_API_BASE při buildu
             apiBase: '',
+            appVersion: version,
+            // Datum sestavení – podle něj jde poznat, jestli telefon už načetl nový build
+            buildDate: new Date().toISOString(),
         },
     },
     nitro: {

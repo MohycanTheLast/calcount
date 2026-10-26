@@ -47,7 +47,7 @@ middleware/   auth (přihlášení), transition.global (směr přechodu detail �
 - **Záložky:** Deník (posledních 7 dní, za nejstarší kartou odkaz do kalendáře), Kalendář (měsíc v URL `?m=YYYY-MM`,
   barvy dnů podle bilance), Nastavení. Nová záložka = položka v seznamu v `AppTabBar.vue` + stránka
   s `definePageMeta({ layout: 'tabs' })` + název routy v SPA přesměrování v `backend/www-root/.htaccess`.
-  Podstránky nastavení jsou v `pages/settings/`. Základní Nastavení má být co nejjednodušší – méně častá nastavení patří
+  Podstránky nastavení jsou v `pages/settings/` (`/settings/about` – verze a datum sestavení). Základní Nastavení má být co nejjednodušší – méně častá nastavení patří
   do `/settings/advanced` (Pokročilá nastavení: zdroj aktivních kalorií, Propojení → `/settings/apple-health`
   s tokeny a návodem pro Zkratky, výběr fotky z galerie `photoGalleryEnabled`).
 - **Úvodní průvodce** (`features/onboarding`): nový účet (`/api/user/me` → `onboardingCompleted: false`) uvidí

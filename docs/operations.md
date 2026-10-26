@@ -1,5 +1,18 @@
 # Provoz
 
+## Verze aplikace
+
+- Číslo verze je jen v `frontend/package.json` (`version`, sémantické verzování). Při buildu se propíše do
+  aplikace (`runtimeConfig.public.appVersion` v `nuxt.config.ts`) a zobrazí se v Nastavení → O aplikaci
+  spolu s datem sestavení – podle něj jde na telefonu poznat, jestli se už načetl nový build.
+- Dokud je verze 0.x: nová funkce = zvýšit prostřední číslo (0.1.0 → 0.2.0), oprava = poslední (0.2.0 → 0.2.1).
+  Verze 1.0.0 = otevření aplikace veřejnosti.
+- Vydání: v `frontend/` `npm version <x.y.z> --no-git-tag-version` (upraví i `package-lock.json`), commit
+  „release x.y.z“, tag `vx.y.z` na tomto commitu, build a nasazení.
+- Nativní aplikace (Capacitor, až bude): stejné číslo jako verze v obchodech (iOS `CFBundleShortVersionString`,
+  Android `versionName`) – při buildu převzít z `package.json`. Číslo sestavení (iOS `CFBundleVersion`, Android
+  `versionCode`) je zvlášť a musí růst s každým nahráním do obchodu, i u stejné verze.
+
 ## Nasazení na produkci (FTP)
 
 1. **Frontend:** `npm run build` ve `frontend/` – výsledek se zkopíruje do `backend/www-root`.

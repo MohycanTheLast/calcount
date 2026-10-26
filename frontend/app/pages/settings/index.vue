@@ -125,12 +125,16 @@
                 </select>
             </section>
 
-            <!-- POKROČILÉ – méně častá nastavení, aby základní zůstalo jednoduché -->
+            <!-- POKROČILÉ a O APLIKACI – méně častá nastavení, aby základní zůstalo jednoduché -->
             <section>
                 <div class="cc-list">
                     <NuxtLink to="/settings/advanced" class="cc-list-row flex items-center justify-between gap-3 text-base">
                         <span>Pokročilá nastavení</span>
                         <span class="cc-subtle" aria-hidden="true">›</span>
+                    </NuxtLink>
+                    <NuxtLink to="/settings/about" class="cc-list-row flex items-center justify-between gap-3 text-base">
+                        <span>O aplikaci</span>
+                        <span class="cc-subtle text-sm">{{ appVersion }} <span aria-hidden="true">›</span></span>
                     </NuxtLink>
                 </div>
             </section>
@@ -170,6 +174,8 @@ const { settings, loaded, loading, saving, error, fetchFromApi, saveToApi } = us
 const { signOut } = useAuth()
 const { invalidateDiary } = useDiaryMutations()
 const { replay: replayOnboarding } = useOnboarding()
+
+const appVersion = useRuntimeConfig().public.appVersion
 
 const showBmrCalc = ref(false)
 
