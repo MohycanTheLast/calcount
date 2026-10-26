@@ -37,6 +37,7 @@ export default defineNuxtConfig({
         // Plynulý přechod mezi obrazovkami; detail dne má vlastní slide (middleware/transition.global.ts)
         pageTransition: { name: 'cc-fade', mode: 'out-in' },
         head: {
+            title: 'Kalorický deník',
             viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
             link: [
                 { rel: 'manifest', href: '/manifest.webmanifest' },
@@ -44,7 +45,7 @@ export default defineNuxtConfig({
             ],
             meta: [
                 { name: 'mobile-web-app-capable', content: 'yes' },
-                { name: 'apple-mobile-web-app-title', content: 'CalCount' },
+                { name: 'apple-mobile-web-app-title', content: 'Kalorický deník' },
                 { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
 
                 { name: 'theme-color', media: '(prefers-color-scheme: light)', content: '#ffffff' },

@@ -17,7 +17,7 @@
 
         <main class="cc-container pt-4 pb-16 space-y-6">
             <p class="text-sm cc-subtle px-1">
-                Aktivní kalorie z Apple Watch a iPhonu může do CalCountu každý den posílat aplikace Zkratky.
+                Aktivní kalorie z Apple Watch a iPhonu může do Kalorického deníku každý den posílat aplikace Zkratky.
                 Potřebuje k tomu osobní token – smí jen zapisovat aktivní kalorie, nic jiného z účtu nevidí.
             </p>
 

@@ -19,9 +19,43 @@
             <article class="cc-card cc-card-pad cc-prose max-w-2xl mx-auto">
                 <p class="cc-subtle">Účinné od {{ EFFECTIVE_DATE }}</p>
 
+                <p>
+                    Víme, že podmínky užívání skoro nikdo nečte – a docela to chápeme. Věnuj jim ale prosím
+                    aspoň trochu pozornosti, jde v nich o tvoje data. To nejdůležitější najdeš hned tady
+                    v kostce, podrobnosti dál v textu.
+                </p>
+
+                <!-- V KOSTCE – hlavní body pro ty, kdo dál číst nebudou -->
+                <div class="cc-terms-summary">
+                    <h2>V kostce</h2>
+                    <ul>
+                        <li>
+                            <strong>Všechno jsou odhady.</strong> Kalorie, vodu i komentáře k záznamům počítají
+                            modely umělé inteligence. Jsou orientační a mohou se mýlit. Aplikace nenahrazuje lékaře
+                            ani nutričního terapeuta.
+                        </li>
+                        <li>
+                            <strong>Tvoje data jsou v bezpečí.</strong> K odhadu posíláme AI vždy jen jeden záznam –
+                            jeho text, nebo fotku zbavenou metadat. Bez jména, e-mailu a bez tvých ostatních záznamů.
+                            AI se tak nedozví, kdo si odhad přeje, ani v jakých souvislostech. Souhrnné informace
+                            o tvých stravovacích návycích AI nikdy neposkytujeme.
+                        </li>
+                        <li>
+                            <strong>Do záznamů nepiš osobní údaje.</strong> Co do textu napíšeš (třeba své jméno),
+                            odejde k AI přesně tak. Za údaje, které takto do záznamu sám(a) vložíš, provozovatel
+                            neodpovídá.
+                        </li>
+                        <li>
+                            <strong>Žádná reklama ani prodej dat.</strong> Účet i všechna data k němu na požádání
+                            smažeme.
+                        </li>
+                        <li>Aplikace je určena osobám starším 15 let.</li>
+                    </ul>
+                </div>
+
                 <h2>1. Úvod</h2>
                 <p>
-                    CalCount (dále „aplikace“) je webová aplikace pro vedení deníku jídla a pití, odhad přijaté
+                    Kalorický deník (dále „aplikace“) je webová aplikace pro vedení deníku jídla a pití, odhad přijaté
                     energie (kcal) a vody a sledování denní kalorické bilance.
                 </p>
                 <p>
@@ -50,12 +84,17 @@
                     </li>
                 </ul>
 
-                <h2>3. Aplikace není zdravotnická rada</h2>
+                <h2>3. Odhady AI, ne zdravotnická rada</h2>
                 <ul>
                     <li>
-                        Kalorie, množství vody a komentáře k záznamům odhaduje umělá inteligence. Jde o orientační
-                        odhady, které mohou být nepřesné nebo chybné. Stejně tak výpočet bazálního metabolismu (BMR)
-                        je jen přibližný.
+                        Kalorie a množství vody u záznamů i komentáře k nim jsou vždy jen odhady modelů umělé
+                        inteligence (od společnosti OpenAI). AI vychází jen z toho, co napíšeš nebo vyfotíš –
+                        skutečnou velikost porce ani přesné složení jídla nezná. Odhady proto mohou být nepřesné
+                        nebo chybné a je dobré je brát jako orientační.
+                    </li>
+                    <li>
+                        Přibližný je i výpočet bazálního metabolismu (BMR) podle vzorce. Aktivní kalorie pocházejí
+                        z tvého nastavení nebo z Apple Zdraví a jsou tak přesné jako jejich zdroj.
                     </li>
                     <li>
                         Aplikace není zdravotnický prostředek a nenahrazuje lékaře, nutričního terapeuta ani jiného
@@ -76,6 +115,11 @@
                     </li>
                     <li>
                         Nevkládej protiprávní obsah ani fotografie, na kterých jsou jiní lidé bez jejich souhlasu.
+                    </li>
+                    <li>
+                        Do textu záznamů a na fotky nevkládej své jméno, kontakty ani jiné osobní či citlivé údaje –
+                        k odhadu nejsou potřeba a odešlou se k AI spolu se záznamem. Za údaje, které takto do
+                        záznamu sám(a) vložíš, provozovatel neodpovídá.
                     </li>
                     <li>Při porušení pravidel může provozovatel účet omezit nebo zrušit.</li>
                 </ul>
@@ -115,8 +159,9 @@
                         Právní základ: tvůj výslovný souhlas udělený při registraci (čl. 9 odst. 2 písm. a GDPR).
                     </li>
                     <li>
-                        <strong>Fotografie jídla</strong> – posíláme k rozpoznání do služby OpenAI, u nás se neukládají.
-                        Uloží se jen výsledný text záznamu.
+                        <strong>Fotografie jídla</strong> – posíláme k rozpoznání do služby OpenAI, předem zmenšené
+                        a bez metadat (např. polohy GPS nebo údajů o telefonu). U nás se neukládají, uloží se jen
+                        výsledný text záznamu.
                     </li>
                     <li>
                         <strong>Hlasové zadávání</strong> – převod řeči na text zajišťuje tvůj prohlížeč nebo telefon
@@ -133,11 +178,15 @@
                 <h3>Komu údaje předáváme</h3>
                 <ul>
                     <li>
-                        <strong>OpenAI</strong> (OpenAI Ireland Ltd. a OpenAI, L.L.C., USA) – text záznamu nebo
-                        fotografii k odhadu kalorií a vody. Neposíláme tvůj e-mail ani jiný údaj, podle kterého by tě
-                        šlo poznat. Podle podmínek OpenAI se data zaslaná přes API nepoužívají k trénování modelů.
-                        Předání do USA probíhá na základě rámce pro ochranu osobních údajů EU–USA, případně
-                        standardních smluvních doložek.
+                        <strong>OpenAI</strong> (OpenAI Ireland Ltd. a OpenAI, L.L.C., USA) – k odhadu kalorií
+                        a vody. Pro každý záznam zvlášť posíláme jen jeho text (nebo fotku bez metadat) a pokyn,
+                        jaký komentář má AI připojit. Požadavky odcházejí z našeho serveru pod účtem provozovatele:
+                        OpenAI nedostane tvůj e-mail, jméno, identifikátor účtu ani IP adresu tvého zařízení a nevidí
+                        tvé ostatní záznamy, součty ani nastavení. Neví tedy, kdo si odhad přeje, ani v jakých
+                        souvislostech, a souhrnné informace o tvých stravovacích návycích nedostává. Podle podmínek
+                        OpenAI se data zaslaná přes API nepoužívají k trénování modelů; OpenAI je může nejvýš 30 dní
+                        uchovat kvůli odhalování zneužití své služby. Předání do USA probíhá na základě rámce pro
+                        ochranu osobních údajů EU–USA, případně standardních smluvních doložek.
                     </li>
                     <li><strong>Poskytovatel hostingu</strong>, na jehož serverech aplikace a databáze běží.</li>
                     <li><strong>Google nebo Apple</strong>, pokud se přes ně přihlásíš.</li>
@@ -215,7 +264,7 @@
 
 <script setup lang="ts">
 // Datum účinnosti = verze podmínek; při změně textu upravit i RegistrationController::TERMS_VERSION
-const EFFECTIVE_DATE = '23. 10. 2026'
+const EFFECTIVE_DATE = '26. 10. 2026'
 
 // TODO: doplnit údaje provozovatele před otevřením registrace veřejnosti
 const OPERATOR = {

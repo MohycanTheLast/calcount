@@ -101,15 +101,26 @@ export function useCamera() {
         loading.value = true
         error.value = null
 
+        // Zmenšená kopie bez metadat (poloha GPS apod.) – AI dostane jen obraz
+        let prepared: File
+        try {
+            prepared = await prepareFoodPhoto(file)
+        } catch (err) {
+            error.value = 'Fotku se nepodařilo zpracovat. Zkus jinou, nebo jídlo popiš textem.'
+            console.error(err)
+            loading.value = false
+            return
+        }
+
         try {
             try {
-                return await diaryApi.uploadPhoto(file)
+                return await diaryApi.uploadPhoto(prepared)
             } catch (err: any) {
                 // iOS po návratu z pozadí (zamčený telefon, přepnutí do fotoaparátu) občas shodí první
                 // požadavek na starém spojení. Rozpoznání fotky nic neukládá, takže jeden nový pokus je bezpečný.
                 if (!isNetworkError(err)) throw err
                 await new Promise((resolve) => setTimeout(resolve, UPLOAD_RETRY_DELAY_MS))
-                return await diaryApi.uploadPhoto(file)
+                return await diaryApi.uploadPhoto(prepared)
             }
         } catch (err: any) {
             error.value = err?.data?.error ?? (isNetworkError(err)

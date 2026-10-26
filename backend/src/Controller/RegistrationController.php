@@ -18,7 +18,7 @@ use Symfony\Component\Routing\Attribute\Route;
 class RegistrationController extends AbstractController
 {
     // Verze podmínek užívání = datum jejich účinnosti. Měnit spolu s frontend/app/pages/terms.vue.
-    public const TERMS_VERSION = '2026-10-23';
+    public const TERMS_VERSION = '2026-10-26';
 
     private const PASSWORD_MIN_LENGTH = 8;
     // Hashování extrémně dlouhého hesla zbytečně zatěžuje server

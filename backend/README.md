@@ -1,3 +1,3 @@
-# calcount app backend
+# Kalorický deník – backend
 
 TODO

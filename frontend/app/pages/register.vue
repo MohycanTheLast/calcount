@@ -41,6 +41,11 @@
                         />
                         <input v-model="form.passwordAgain" type="password" class="cc-input" placeholder="Heslo znovu" autocomplete="new-password" />
 
+                        <p class="text-xs cc-subtle">
+                            Kalorie odhaduje AI. Posíláme jí jen text záznamu nebo fotku – nikdy tvé jméno, e-mail
+                            ani tvé další záznamy.
+                        </p>
+
                         <label class="flex items-start gap-3 py-1 text-sm cursor-pointer">
                             <input v-model="form.termsAccepted" type="checkbox" class="cc-checkbox" />
                             <span>

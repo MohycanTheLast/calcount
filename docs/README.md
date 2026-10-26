@@ -1,6 +1,6 @@
-# CalCount – dokumentace
+# Kalorický deník – dokumentace
 
-Kalorický deníček: zápis jídla a pití textem, hlasem nebo fotkou, odhad kalorií a vody přes AI,
+Kalorický deník – zápis jídla a pití textem, hlasem nebo fotkou, odhad kalorií a vody přes AI,
 denní bilance příjmu a výdeje.
 
 | Dokument | Obsah |

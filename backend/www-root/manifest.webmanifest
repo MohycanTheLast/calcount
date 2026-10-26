@@ -1,6 +1,6 @@
 {
-  "name": "Calory Calculator",
-  "short_name": "CalCount",
+  "name": "Kalorický deník",
+  "short_name": "Kalorický deník",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -51,6 +51,13 @@
 - Text záznamu max. 500 znaků (ukládá se 255).
 - Fotka max. 10 MB, jen JPEG/PNG/WebP/GIF – typ podle obsahu souboru (fileinfo), ne podle přípony.
 - Chyby z OpenAI jdou jen do logu, klient dostane obecnou hlášku.
+
+### Co dostane OpenAI (slibujeme v podmínkách užívání)
+- Vždy jen jeden záznam: text (+ systémový pokyn podle režimu komentáře), nebo fotku. Žádný e-mail, ID účtu,
+  IP klienta, historie ani součty – požadavek jde ze serveru pod klíčem provozovatele, bez parametru `user`.
+  **Při změně promptu nebo volání (`OpenAiClient`) to musí dál platit, jinak upravit `pages/terms.vue`.**
+- Fotka se před odesláním na frontendu překreslí přes canvas (`utils/image.ts`): delší strana max. 1600 px, JPEG
+  bez metadat (EXIF – poloha GPS, zařízení). Když to nejde, fotka se neodešle (originál s metadaty nikdy).
 - Prompt injection: text uživatele jde přímo do LLM; dopad je nízký (striktní JSON schéma odpovědi).
   **Komentář od AI vždy vykreslovat jen jako text, nikdy přes `v-html`.**
 

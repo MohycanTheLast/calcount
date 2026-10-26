@@ -31,7 +31,7 @@
     .scroll-ios { -webkit-overflow-scrolling: touch; }
 }
 
-/* ===== CalCount: iOS Health design tokens ===== */
+/* ===== Kalorický deník: iOS Health design tokens ===== */
 @layer base {
     :root {
         --cc-bg: 248 250 252;
@@ -173,6 +173,17 @@
     .cc-prose a {
         @apply underline underline-offset-4;
         color: rgb(var(--cc-accent-strong));
+    }
+
+    /* Shrnutí „V kostce“ na začátku podmínek */
+    .cc-terms-summary {
+        @apply rounded-2xl px-4 py-3 space-y-2;
+        background: rgb(var(--cc-accent) / 0.1);
+        border: 1px solid rgb(var(--cc-accent) / 0.35);
+    }
+
+    .cc-prose .cc-terms-summary h2 {
+        @apply pt-0;
     }
 
     /* --- úvodní průvodce (features/onboarding) --- */
