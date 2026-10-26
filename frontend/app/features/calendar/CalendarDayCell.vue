@@ -19,7 +19,8 @@
 import type { DaySummary } from "~/api/types";
 import { dayStatus } from "~/utils/dayStatus";
 
-// Jeden den v mřížce kalendáře – barva podle bilance, klepnutí otevře detail dne (jen den se záznamem)
+// Jeden den v mřížce kalendáře – barva podle bilance, klepnutí otevře detail dne (i prázdného – dá se do něj
+// zpětně zapsat; budoucí dny ne)
 const props = defineProps<{
     date: Date
     day?: DaySummary
@@ -27,7 +28,7 @@ const props = defineProps<{
 }>()
 
 const status = computed(() => (props.day ? dayStatus(props.day) : 'none'))
-const clickable = computed(() => !props.future && status.value !== 'none')
+const clickable = computed(() => !props.future)
 
 const classes = computed(() => ({
     'cc-day--deficit': status.value === 'deficit',

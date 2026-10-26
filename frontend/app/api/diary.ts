@@ -12,9 +12,9 @@ export const useDiaryApi = () => {
         getDayEntries: (date: string) =>
             apiFetch<DayEntry[]>(`/api/diary-day/${date}`),
 
-        // Odhad kalorií a vody z textu přes AI; záznam se rovnou uloží k dnešnímu dni
-        createEntry: (text: string) =>
-            apiFetch<CreatedEntry>('/api/calculate', { method: 'POST', body: { food: text } }),
+        // Odhad kalorií a vody z textu přes AI; záznam se rovnou uloží k dnešku, nebo k zadanému dni (zpětný zápis)
+        createEntry: (text: string, date?: string) =>
+            apiFetch<CreatedEntry>('/api/calculate', { method: 'POST', body: { food: text, date } }),
 
         updateEntry: (id: number, values: EntryValues) =>
             apiFetch<void>(`/api/save/${id}`, { method: 'POST', body: values }),

@@ -57,7 +57,7 @@ export const useDiaryMutations = () => {
         queryClient.setQueriesData<DayEntry[]>({ queryKey: ['diary', 'dayEntries'] }, (old) => old && update(old))
 
     const createEntry = useMutation({
-        mutationFn: (text: string) => diaryApi.createEntry(text),
+        mutationFn: ({ text, date }: { text: string; date?: string }) => diaryApi.createEntry(text, date),
         onSuccess: invalidateDiary,
     })
 

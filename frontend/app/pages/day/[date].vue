@@ -54,12 +54,27 @@
                 </ul>
             </section>
 
+            <!-- ZPĚTNÝ ZÁPIS – stejně jako v Deníku, jen k tomuto dni -->
+            <section>
+                <h2 class="cc-section-title">{{ today ? 'Nový záznam' : 'Doplnit záznam' }}</h2>
+
+                <EntryComposer :date="isoDate" @created="onCreated" />
+
+                <AlertMessage
+                    v-if="confirmationMessage !== null"
+                    :key="confirmationCounter"
+                    :message="confirmationMessage"
+                    :duration="5000"
+                />
+            </section>
+
             <DayExpenditureCard v-if="summary" :summary="summary" />
         </main>
     </div>
 </template>
 
 <script setup lang="ts">
+import type { CreatedEntry } from "~/api/types";
 import { useDayEntriesQuery, useDaySummaryQuery } from "~/features/diary/queries";
 
 definePageMeta({
@@ -71,11 +86,23 @@ const router = useRouter()
 
 const isoDate = String(route.params.date)
 const date = parseIsoDate(isoDate)
-if (!date) {
+// Neplatné datum nebo budoucí den (do budoucna se nezapisuje) – zpět do Deníku
+if (!date || isoDate > formatIsoDate(new Date())) {
     navigateTo('/app', { replace: true })
 }
 
 const title = computed(() => (date ? dayTitle(date) : ''))
+const today = date ? isToday(date) : false
+
+const confirmationMessage = ref<string | null>(null)
+const confirmationCounter = ref(0)
+
+// Nový záznam se objeví v seznamu (obnoví se celý deník), tady jen krátké potvrzení s odhadem a komentářem AI
+const onCreated = (entry: CreatedEntry) => {
+    const summary = `Zapsáno: ${formatKcal(entry.kcal)} kcal, ${formatLiters(entry.waterInMl / 1000)} l`
+    confirmationMessage.value = entry.comment ? `${summary} – ${entry.comment}` : summary
+    confirmationCounter.value += 1
+}
 
 const { data: entries, isPending, isError } = useDayEntriesQuery(isoDate)
 // Výdej dne ze serveru (BMR + aktivní kalorie podle zdroje)

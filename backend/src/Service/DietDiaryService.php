@@ -19,7 +19,8 @@ class DietDiaryService
     {
     }
 
-    public function create(string $text, DietRecord $record): DietDiary
+    // $entryDate = den, ke kterému záznam patří (zpětný zápis); null = dnešek
+    public function create(string $text, DietRecord $record, ?\DateTimeImmutable $entryDate = null): DietDiary
     {
         // Text se ukládá tak, jak ho uživatel napsal. Escapuje se až při výstupu (frontend, JSON),
         // jinak by se v detailu zobrazovaly entity typu &quot; a nešlo by v textu vyhledávat.
@@ -30,7 +31,7 @@ class DietDiaryService
             ->setContent($text)
             ->setKcal((int) round($record->kcal))
             ->setWaterInMl((int) round($record->waterInMl))
-            ->setEntryDate(new \DateTimeImmutable('today'))
+            ->setEntryDate($entryDate ?? new \DateTimeImmutable('today'))
             ->setCreatedAt(new \DateTime())
             ->setUser($this->getLoggedUser())
         ;

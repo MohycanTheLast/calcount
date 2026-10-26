@@ -42,6 +42,8 @@ middleware/   auth (přihlášení), transition.global (směr přechodu detail �
 - **Stránky bez přihlášení:** `/` (přihlášení), `/register`, `/terms` (podmínky užívání a GDPR),
   `/verify-email` (cíl odkazu z registračního e-mailu) – seznam `PUBLIC_PATHS` v `app.vue` a SPA přesměrování
   v `backend/www-root/.htaccess`.
+- **Detail dne** (`/day/YYYY-MM-DD`) jde otevřít pro každý den kromě budoucích, i bez záznamu (z Deníku „Doplnit ›“, z kalendáře
+  klepnutím) – je v něm stejné zadávání jako v Deníku, záznam se zapíše k tomu dni.
 - **Záložky:** Deník (posledních 7 dní, za nejstarší kartou odkaz do kalendáře), Kalendář (měsíc v URL `?m=YYYY-MM`,
   barvy dnů podle bilance), Nastavení. Nová záložka = položka v seznamu v `AppTabBar.vue` + stránka
   s `definePageMeta({ layout: 'tabs' })` + název routy v SPA přesměrování v `backend/www-root/.htaccess`.
@@ -111,7 +113,7 @@ Počítá `DaySummaryService` – jediné místo, kde se počítá výdej a bila
 | `PUT/DELETE /api/activity/manual/{YYYY-MM-DD}` | ruční úprava aktivních kalorií dne / její zrušení; vrací souhrn dne |
 | `GET/POST /api/tokens`, `DELETE /api/tokens/{id}` | osobní API tokeny (vytvoření vrátí plný token jen jednou; první token přepne `activitySource` na `synced_or_static`) |
 | `POST /api/auth/google`, `/api/auth/apple` | přihlášení/registrace přes ID token (bez client ID vypnuté) |
-| `POST /api/calculate` | nový záznam z textu (AI odhad), uloží se k dnešnímu dni |
+| `POST /api/calculate` | nový záznam z textu (AI odhad) k dnešku, nebo s `date` k zadanému dni (zpětný zápis, max. 366 dní zpět) |
 | `POST /api/save/{id}`, `/api/delete/{id}` | úprava / smazání záznamu (jen vlastník) |
 | `GET /api/diary-day/{YYYY-MM-DD}` | záznamy dne |
 | `POST /api/upload` | rozpoznání jídla na fotce (nic neukládá) |

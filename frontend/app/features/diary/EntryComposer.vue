@@ -111,6 +111,11 @@ import type { CreatedEntry } from "~/api/types";
 import { useDiaryMutations } from "~/features/diary/queries";
 
 // Zadání nového záznamu textem, hlasem nebo fotkou. Po uložení vyšle „created“ s výsledkem od AI.
+const props = defineProps<{
+    // Den, ke kterému se záznam zapíše (YYYY-MM-DD) – zpětný zápis z detailu dne; bez něj dnešek
+    date?: string
+}>();
+
 const emit = defineEmits<{
     (e: "created", entry: CreatedEntry): void;
 }>();
@@ -197,7 +202,7 @@ const onSubmit = async () => {
     error.value = null
 
     try {
-        const entry = await createEntry.mutateAsync(text.value)
+        const entry = await createEntry.mutateAsync({ text: text.value, date: props.date })
         text.value = ''
         clearPhoto()
         emit('created', entry)

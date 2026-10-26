@@ -56,7 +56,7 @@ const scrollToTodayCard = async () => {
 };
 
 const openDetail = (card: DayCard) => {
-    if (!card.exists) return;
+    // I prázdný den – v detailu se do něj dá zpětně zapsat
     navigateTo(`/day/${card.isoDate}`);
 };
 
@@ -105,12 +105,11 @@ watch(days, (value, previous) => {
             <section
                 v-for="(card, index) in dayCards"
                 :key="card.isoDate"
-                class="cc-card cc-card-pad w-[88%] shrink-0 snap-center transition active:scale-[0.99]"
-                :class="{ 'cursor-pointer': card.exists }"
+                class="cc-card cc-card-pad w-[88%] shrink-0 snap-center transition active:scale-[0.99] cursor-pointer"
                 :data-day-index="index"
                 :data-tour="index === dayCards.length - 1 ? 'today-card' : undefined"
-                :role="card.exists ? 'button' : undefined"
-                :tabindex="card.exists ? 0 : undefined"
+                role="button"
+                tabindex="0"
                 @click="openDetail(card)"
                 @keydown.enter="openDetail(card)"
             >
@@ -118,7 +117,8 @@ watch(days, (value, previous) => {
                     <div class="text-sm font-semibold">{{ card.label }}</div>
 
                     <span v-if="card.exists" class="cc-link no-underline">Detail ›</span>
-                    <span v-else class="text-xs cc-subtle">Bez záznamu</span>
+                    <span v-else-if="isToday(card.date)" class="text-xs cc-subtle">Bez záznamu</span>
+                    <span v-else class="cc-link no-underline">Doplnit ›</span>
                 </header>
 
                 <DaySummary

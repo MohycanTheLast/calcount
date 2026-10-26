@@ -25,6 +25,9 @@ class ApiController extends AbstractController
     private const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
     private const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
+    // Zpětný zápis do detailu dne – jak daleko zpět (stejně jako max. rozsah souhrnů dní)
+    private const MAX_ENTRY_DAYS_BACK = 366;
+
     public function __construct(
         protected OpenAiClient $openAiClient,
         protected DietDiaryService $dietDiaryService,
@@ -34,6 +37,10 @@ class ApiController extends AbstractController
     {
     }
 
+    /**
+     * Nový záznam z textu (odhad kalorií a vody přes AI). Tělo: { "food": "…", "date": "YYYY-MM-DD" };
+     * bez data se záznam uloží k dnešku, s datem jde o zpětný zápis z detailu dne.
+     */
     #[Route('/api/calculate', methods: ['POST'])]
     public function calculate(Request $request): JsonResponse
     {
@@ -42,6 +49,14 @@ class ApiController extends AbstractController
 
         if (!is_string($text) || trim($text) === '') {
             return new JsonResponse(["error" => "No data provided"], Response::HTTP_BAD_REQUEST);
+        }
+
+        $entryDate = $this->parseEntryDate(is_array($data) ? ($data['date'] ?? null) : null);
+        if ($entryDate === false) {
+            return new JsonResponse(
+                ['error' => sprintf('Zapisovat jde jen do dnešního dne nebo nejvýš %d dní zpět.', self::MAX_ENTRY_DAYS_BACK)],
+                Response::HTTP_BAD_REQUEST
+            );
         }
 
         if (mb_strlen($text) > self::MAX_FOOD_TEXT_LENGTH) {
@@ -61,11 +76,34 @@ class ApiController extends AbstractController
             return $this->aiFailure('calculate', $e);
         }
 
-        $savedItem = $this->dietDiaryService->create($text, $resultData);
+        $savedItem = $this->dietDiaryService->create($text, $resultData, $entryDate);
 
         $resultData->id = $savedItem->getId();
 
         return new JsonResponse($resultData);
+    }
+
+    /**
+     * @return \DateTimeImmutable|null|false null = bez data (dnešek), false = neplatné nebo mimo povolený rozsah
+     */
+    private function parseEntryDate(mixed $value): \DateTimeImmutable|null|false
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $date = is_string($value) ? \DateTimeImmutable::createFromFormat('!Y-m-d', $value) : false;
+        if ($date === false || $date->format('Y-m-d') !== $value) {
+            return false;
+        }
+
+        // Den uživatele může být o den napřed oproti serveru (časová pásma) – zítřek ještě povolíme
+        $today = new \DateTimeImmutable('today');
+        if ($date > $today->modify('+1 day') || $date < $today->modify(sprintf('-%d days', self::MAX_ENTRY_DAYS_BACK))) {
+            return false;
+        }
+
+        return $date;
     }
 
     #[Route('/api/save/{id}', requirements: ['id' => '\d+'], methods: ['POST'])]
