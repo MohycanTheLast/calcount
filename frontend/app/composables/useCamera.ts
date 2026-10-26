@@ -1,5 +1,12 @@
-import { ref } from 'vue'
+import { onScopeDispose, ref } from 'vue'
 import { useDiaryApi } from '~/api/diary'
+import type { PhotoAnalysis } from '~/api/types'
+
+// Pauza před opakováním odeslání po síťové chybě
+const UPLOAD_RETRY_DELAY_MS = 800
+
+// Síťová chyba = server vůbec neodpověděl (chybí HTTP status)
+const isNetworkError = (err: any) => !err?.status
 
 export function useCamera() {
     const photo = ref<File | null>(null) // Uložený obrázek
@@ -9,32 +16,68 @@ export function useCamera() {
 
     const diaryApi = useDiaryApi()
 
+    // Jeden skrytý <input type="file"> vložený do stránky a znovu používaný. Input jen v paměti (mimo DOM)
+    // může iOS Safari při focení uvolnit (fotoaparát zabere hodně paměti, typicky po delší době na pozadí)
+    // a „change“ pak nepřijde – vyfocená fotka by se tiše zahodila.
+    let fileInput: HTMLInputElement | null = null
+    let pendingResolve: ((file: File | null) => void) | null = null
+
+    const settle = (file: File | null) => {
+        const resolve = pendingResolve
+        pendingResolve = null
+        resolve?.(file)
+    }
+
+    const getFileInput = () => {
+        if (fileInput?.isConnected) return fileInput
+
+        const input = document.createElement('input')
+        input.type = 'file'
+        input.accept = 'image/*'
+        input.capture = 'environment' // Upřesňuje použití zadní kamery
+        input.tabIndex = -1
+        input.setAttribute('aria-hidden', 'true')
+        // Neviditelný, ale ne display: none – kvůli spolehlivému click() ve starších prohlížečích
+        input.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none;'
+
+        input.addEventListener('change', () => settle(input.files?.[0] ?? null))
+        // Zrušené focení (prohlížeče s událostí „cancel“) – čekající volání neskončí navždy
+        input.addEventListener('cancel', () => settle(null))
+
+        document.body.appendChild(input)
+        fileInput = input
+        return input
+    }
+
+    onScopeDispose(() => {
+        settle(null)
+        fileInput?.remove()
+        fileInput = null
+    })
+
     // Funkce pro otevření kamery a zachycení fotografie
     const openCamera = async () => {
         try {
-            const fileInput = document.createElement('input')
-            fileInput.type = 'file'
-            fileInput.accept = 'image/*'
-            fileInput.capture = 'environment' // Upřesňuje použití zadní kamery
-            fileInput.click()
+            const input = getFileInput()
+            // Předchozí nedokončené otevření (zavřené bez události) už nečeká
+            settle(null)
+            // Vyprázdnit, aby „change“ přišel i pro stejný soubor jako minule
+            input.value = ''
 
-            // Po výběru obrázku
-            return new Promise<File | null>((resolve) => {
-                fileInput.onchange = (event: Event) => {
-                    const target = event.target as HTMLInputElement
-                    const file = target?.files?.[0] || null
-                    photo.value = file
-                    error.value = null
-
-                    if (file) {
-                        // URL pro náhled obrázku (např. při zobrazení vyfocené fotografie); předchozí uvolnit
-                        if (capturedImageURL.value) URL.revokeObjectURL(capturedImageURL.value)
-                        capturedImageURL.value = URL.createObjectURL(file)
-                    }
-
-                    resolve(file)
-                }
+            const file = await new Promise<File | null>((resolve) => {
+                pendingResolve = resolve
+                input.click()
             })
+
+            if (file) {
+                photo.value = file
+                error.value = null
+                // URL pro náhled obrázku (např. při zobrazení vyfocené fotografie); předchozí uvolnit
+                if (capturedImageURL.value) URL.revokeObjectURL(capturedImageURL.value)
+                capturedImageURL.value = URL.createObjectURL(file)
+            }
+
+            return file
         } catch (err) {
             error.value = 'Nepodařilo se otevřít kameru.'
             console.error(err)
@@ -43,8 +86,9 @@ export function useCamera() {
     }
 
     // Funkce pro odeslání fotografie na BE
-    const uploadPhoto = async () => {
-        if (!photo.value) {
+    const uploadPhoto = async (): Promise<PhotoAnalysis | undefined> => {
+        const file = photo.value
+        if (!file) {
             error.value = 'Neexistuje žádná fotografie k odeslání.'
             return
         }
@@ -53,9 +97,19 @@ export function useCamera() {
         error.value = null
 
         try {
-            return await diaryApi.uploadPhoto(photo.value)
+            try {
+                return await diaryApi.uploadPhoto(file)
+            } catch (err: any) {
+                // iOS po návratu z pozadí (zamčený telefon, přepnutí do fotoaparátu) občas shodí první
+                // požadavek na starém spojení. Rozpoznání fotky nic neukládá, takže jeden nový pokus je bezpečný.
+                if (!isNetworkError(err)) throw err
+                await new Promise((resolve) => setTimeout(resolve, UPLOAD_RETRY_DELAY_MS))
+                return await diaryApi.uploadPhoto(file)
+            }
         } catch (err: any) {
-            error.value = err?.data?.error ?? 'Chyba při odesílání fotografie.'
+            error.value = err?.data?.error ?? (isNetworkError(err)
+                ? 'Nepodařilo se spojit se serverem. Zkontroluj připojení a zkus to znovu.'
+                : 'Chyba při odesílání fotografie.')
             console.error(err)
         } finally {
             loading.value = false
