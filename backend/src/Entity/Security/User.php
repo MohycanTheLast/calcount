@@ -3,6 +3,7 @@
 namespace App\Entity\Security;
 
 use App\Entity\UserSettings;
+use App\Model\AccountType;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -67,6 +68,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     // Kdy uživatel dokončil (nebo přeskočil) úvodního průvodce aplikací; null = při příštím otevření ho uvidí
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $onboardingCompletedAt = null;
+
+    // Typ účtu (App\Model\AccountType) – podle něj jsou dostupné placené funkce; mění se zatím jen v databázi
+    #[ORM\Column(length: 20, options: ['default' => AccountType::FREE])]
+    private string $accountType = AccountType::FREE;
 
     public function __construct()
     {
@@ -246,5 +251,26 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->onboardingCompletedAt ??= new \DateTimeImmutable();
 
         return $this;
+    }
+
+    public function getAccountType(): string
+    {
+        return $this->accountType;
+    }
+
+    public function setAccountType(string $accountType): static
+    {
+        if (!in_array($accountType, AccountType::ALL, true)) {
+            throw new \InvalidArgumentException(sprintf('Unknown account type "%s"', $accountType));
+        }
+
+        $this->accountType = $accountType;
+
+        return $this;
+    }
+
+    public function hasFeature(string $feature): bool
+    {
+        return AccountType::hasFeature($this->accountType, $feature);
     }
 }

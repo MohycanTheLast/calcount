@@ -56,6 +56,12 @@ middleware/   auth (přihlášení), transition.global (směr přechodu detail �
   spustit v Nastavení → Účet. Nový prvek do průvodce = atribut `data-tour` + krok v `steps.ts`.
 - **Aktivní kalorie:** zdroj se volí v pokročilém nastavení (`activitySource`), konkrétní den jde ručně upravit v detailu dne
   (`DayExpenditureCard`). Ikona u výdeje v `DaySummary` ukazuje Apple Zdraví (hodinky) nebo ruční úpravu (tužka).
+- **Typy účtů** (`free`, `premium`, `superior`): funkce k typům jsou jen v `App\Model\AccountType`, frontend je dostane
+  v `/api/user/me` (`accountType`, `features`). Placenou funkci backend nedovolí zapnout v nastavení a frontend
+  ji ukáže jen se zapnutým nastavením i funkcí účtu (`useTracking()` ve `features/account`). Typ se mění v DB.
+- **Hlídání** (pokročilé nastavení): pitný režim proti cíli (všichni), kofein proti limitu a makroživiny
+  (`macros`, `caffeine` – premium a superior). AI odhaduje makroživiny a kofein u každého záznamu vždy, ukazatele
+  (`DayTracking`) jsou v denních kartách a v detailu dne. Výchozí cíl 2 l a limit 400 mg jsou v `utils/tracking.ts`.
 - **Přechody stránek** běží v režimu `out-in`. Stránka musí mít v `app.vue` i v layoutu vlastní obalový
   element – jinak Vue při současné změně okolí (tab bar) vloží novou stránku na špatné místo nebo spadne
   na `insertBefore`.
@@ -75,10 +81,10 @@ middleware/   auth (přihlášení), transition.global (směr přechodu detail �
 
 | Tabulka | Účel |
 |---|---|
-| `user` | účet; `password` může být prázdné u účtu jen přes externí přihlášení; `created_at`, `email_verified_at`, souhlas s podmínkami (`terms_accepted_at`, `terms_version`), `onboarding_completed_at` |
+| `user` | účet; `password` může být prázdné u účtu jen přes externí přihlášení; `created_at`, `email_verified_at`, souhlas s podmínkami (`terms_accepted_at`, `terms_version`), `onboarding_completed_at`, `account_type` |
 | `user_identity` | propojené externí účty (provider + `sub`), víc na uživatele |
-| `user_settings` | 1:1 s uživatelem – BMR, průměrná aktivita, téma, režim komentáře AI, `activity_source`, `photo_gallery_enabled` |
-| `diet_record` | záznam jídla/pití: text, kcal, voda (ml), **`entry_date`** (den, ke kterému patří) |
+| `user_settings` | 1:1 s uživatelem – BMR, průměrná aktivita, téma, režim komentáře AI, `activity_source`, `photo_gallery_enabled`, hlídání (`hydration_enabled` + `water_goal_ml`, `caffeine_enabled` + `caffeine_limit_mg`, `macros_enabled`) |
+| `diet_record` | záznam jídla/pití: text, kcal, voda (ml), **`entry_date`** (den, ke kterému patří), odhad makroživin (g) a kofeinu (mg) – `null` u starších záznamů |
 | `activity_energy` | aktivní kalorie za den a zdroj (`manual`, `apple_health`, `strava`), unikátní (uživatel, den, zdroj) |
 | `refresh_tokens` | refresh tokeny (gesdinet) |
 | `personal_access_token` | osobní API tokeny pro iOS Zkratky – jen hash, scopes, poslední použití, odvolání |
@@ -93,7 +99,8 @@ Jeden prvek za každý den v rozsahu (i bez záznamu), max. 366 dní; bez parame
 Počítá `DaySummaryService` – jediné místo, kde se počítá výdej a bilance.
 
 ```
-{ date, kcal, waterMl, entryCount, bmrKcal, activeKcal, activeSource, expenditureKcal, balanceKcal }
+{ date, kcal, waterMl, entryCount, bmrKcal, activeKcal, activeSource, expenditureKcal, balanceKcal,
+  proteinG, carbsG, sugarG, fatG, caffeineMg, nutrientsEntryCount }
 ```
 
 - **výdej** = BMR + aktivní kalorie dne; bez BMR je výdej i bilance `null`,

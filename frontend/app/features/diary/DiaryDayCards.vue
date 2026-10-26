@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import type { DaySummary } from "~/api/types";
+import { useTracking } from "~/features/account/useAccount";
 import { useRecentDaysQuery } from "~/features/diary/queries";
 
 // ===== iOS Health swipe denní karty (souhrny dní ze serveru) =====
 
 const { data: days, isPending, isError, refetch } = useRecentDaysQuery();
+const tracking = useTracking();
 
 const scrollerEl = ref<HTMLElement | null>(null);
 
@@ -19,6 +21,7 @@ type DayCard = {
     expenditureKcal: number | null;
     missingBmr: boolean;
     activeSource: DaySummary["activeSource"];
+    summary: DaySummary;
 };
 
 const toCard = (day: DaySummary): DayCard => {
@@ -33,6 +36,7 @@ const toCard = (day: DaySummary): DayCard => {
         expenditureKcal: day.expenditureKcal,
         missingBmr: day.bmrKcal === null,
         activeSource: day.activeSource,
+        summary: day,
     };
 };
 
@@ -127,6 +131,7 @@ watch(days, (value, previous) => {
                     :water-liters="card.water"
                     :expenditure-kcal="card.expenditureKcal"
                     :active-source="card.activeSource"
+                    :hide-water="tracking.hydration"
                 >
                     <template #no-expenditure>
                         <NuxtLink
@@ -140,6 +145,15 @@ watch(days, (value, previous) => {
                         <span v-else />
                     </template>
                 </DaySummary>
+
+                <DayTracking
+                    class="mt-4"
+                    :water-ml="card.summary.waterMl"
+                    :caffeine-mg="card.summary.caffeineMg"
+                    :macros="card.summary"
+                    :entry-count="card.summary.entryCount"
+                    :nutrients-entry-count="card.summary.nutrientsEntryCount"
+                />
             </section>
         </div>
     </div>

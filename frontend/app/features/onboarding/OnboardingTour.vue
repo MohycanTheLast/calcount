@@ -76,7 +76,8 @@
 <script setup lang="ts">
 import { useRecentDaysQuery } from '~/features/diary/queries'
 import { TOUR_STEPS, type TourStep } from '~/features/onboarding/steps'
-import { useCurrentUserQuery, useOnboarding } from '~/features/onboarding/useOnboarding'
+import { useCurrentUserQuery } from '~/features/account/useAccount'
+import { useOnboarding } from '~/features/onboarding/useOnboarding'
 import { type BubblePlacement, type Box, placeBubble, spotlightBox } from '~/utils/tour'
 
 // Uvítání a průvodce po Deníku. Patří na stránku Deníku – zvýrazňuje její prvky (atribut data-tour).

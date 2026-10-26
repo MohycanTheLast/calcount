@@ -81,7 +81,11 @@ class OpenAiClient
             $commentMode = $modes[array_rand($modes)];
         }
 
-        $prompt = "Jsi nutriční asistent. Z textu odhadni kalorickou hodnotu jídla a pitný režim pokud obsahuje text i pití. Vrať pouze validní JSON.";
+        // Makroživiny a kofein se odhadují vždy (pár tokenů navíc, viz docs/ai-models.md) – zobrazí se jen těm,
+        // kdo je mají zapnuté, a po zapnutí jsou k dispozici i u dřívějších záznamů.
+        $prompt = "Jsi nutriční asistent. Z textu odhadni kalorickou hodnotu jídla a pitný režim pokud obsahuje text i pití."
+            . " Odhadni také makroživiny v gramech (bílkoviny, sacharidy, z toho cukry, tuky) a kofein v miligramech"
+            . " (káva, čaj, energetické nápoje, kola, čokoláda; bez kofeinu 0). Vrať pouze validní JSON.";
         switch ($commentMode) {
             case "brief_health":
                 $prompt .= " Součástí odpovědi bude stručný komentář, zda je jídlo nebo pití z textu zdravé nebo ne.";
@@ -98,10 +102,15 @@ class OpenAiClient
 
         $jsonProperties = [
             'kcal' => ['type' => 'number'],
-            'waterInMl' => ['type' => 'number']
+            'waterInMl' => ['type' => 'number'],
+            'proteinG' => ['type' => 'number'],
+            'carbsG' => ['type' => 'number'],
+            'sugarG' => ['type' => 'number'],
+            'fatG' => ['type' => 'number'],
+            'caffeineMg' => ['type' => 'number'],
         ];
 
-        $required = ['kcal', 'waterInMl'];
+        $required = ['kcal', 'waterInMl', 'proteinG', 'carbsG', 'sugarG', 'fatG', 'caffeineMg'];
 
         if ($commentMode !== "none") {
             $jsonProperties['comment'] = ['type' => 'string'];

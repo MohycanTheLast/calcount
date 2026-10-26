@@ -73,7 +73,8 @@ oficiální náhrada `gpt-6-luna` vyjde zhruba 8× levněji.
 5. **Logovat skutečnou spotřebu:** Responses API vrací `usage` (vstupní, výstupní a uvažovací tokeny) –
    ukládat a odhady nahradit skutečnými čísly.
 6. **Makroživiny cenu skoro nezvýší:** bílkoviny, tuky, sacharidy a cukry jsou ~20 tokenů výstupu navíc,
-   u `gpt-6-luna` zlomek tisíciny dolaru za záznam. Náklady jsou hlavně ve vývoji (sloupce v DB, zobrazení).
+   u `gpt-6-luna` zlomek tisíciny dolaru za záznam. **Hotovo:** `estimateNutrition` vrací makroživiny
+   i kofein u každého záznamu (pro všechny typy účtů – po zapnutí funkce jsou k dispozici i u starších záznamů).
 
 ## Zdroje
 

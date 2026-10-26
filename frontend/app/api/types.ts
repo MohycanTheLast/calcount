@@ -21,6 +21,21 @@ export type UserSettings = {
     saveWeight: boolean
     activitySource?: ActivitySource
     photoGalleryEnabled?: boolean // pokročilé: u zadávání jídla i výběr fotky z galerie
+    // Pokročilé – hlídání (null u cíle/limitu = výchozí hodnota z utils/tracking.ts)
+    hydrationEnabled?: boolean
+    waterGoalMl?: number | null
+    caffeineEnabled?: boolean // jen typy účtů s funkcí caffeine
+    caffeineLimitMg?: number | null
+    macrosEnabled?: boolean // jen typy účtů s funkcí macros
+}
+
+// Odhad AI k záznamu: makroživiny v gramech, kofein v mg (null u starších záznamů bez odhadu)
+export type Nutrients = {
+    proteinG: number | null
+    carbsG: number | null
+    sugarG: number | null // z toho cukry
+    fatG: number | null
+    caffeineMg: number | null
 }
 
 // GET /api/days – jeden den (backend: App\Model\DaySummary)
@@ -34,10 +49,17 @@ export type DaySummary = {
     activeSource: 'static' | 'manual' | 'apple_health' | 'strava' | 'none'
     expenditureKcal: number | null // BMR + aktivní kalorie; null bez vyplněného BMR
     balanceKcal: number | null // příjem − výdej; záporné = deficit
+    // Součty ze záznamů s odhadem; nutrientsEntryCount = kolik záznamů dne odhad má (starší ne)
+    proteinG: number
+    carbsG: number
+    sugarG: number
+    fatG: number
+    caffeineMg: number
+    nutrientsEntryCount: number
 }
 
 // GET /api/diary-day/{date} – jeden záznam dne
-export type DayEntry = {
+export type DayEntry = Nutrients & {
     id: number
     text: string
     kcal: number
@@ -45,7 +67,7 @@ export type DayEntry = {
 }
 
 // POST /api/calculate
-export type CreatedEntry = {
+export type CreatedEntry = Partial<Nutrients> & {
     id: number
     kcal: number
     waterInMl: number
@@ -96,4 +118,10 @@ export type CurrentUser = {
     user_identifier: string // e-mail
     roles: string[]
     onboardingCompleted: boolean // false = při otevření Deníku se ukáže úvodní průvodce
+    accountType: AccountType
+    features: AccountFeature[] // funkce, které typ účtu má (backend App\Model\AccountType)
 }
+
+export type AccountType = 'free' | 'premium' | 'superior'
+
+export type AccountFeature = 'macros' | 'caffeine'

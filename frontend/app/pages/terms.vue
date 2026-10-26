@@ -152,7 +152,7 @@
                         (čl. 6 odst. 1 písm. b GDPR).
                     </li>
                     <li>
-                        <strong>Deník</strong> – texty záznamů o jídle a pití, odhad kalorií a vody, datum.
+                        <strong>Deník</strong> – texty záznamů o jídle a pití, odhad kalorií, vody, makroživin a kofeinu, datum.
                         <strong>Tělo a aktivita</strong> – bazální metabolismus, průměrná denní aktivita, váha (jen
                         pokud ji uložíš), aktivní kalorie. Účel: poskytování služby (deník, denní bilance, komentáře).
                         Z těchto údajů lze usuzovat na tvůj zdravotní stav, jde proto o zvláštní kategorii údajů.

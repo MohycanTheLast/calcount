@@ -22,6 +22,16 @@
                     :water-liters="totals.waterLiters"
                     :expenditure-kcal="summary?.expenditureKcal ?? null"
                     :active-source="summary?.activeSource"
+                    :hide-water="tracking.hydration"
+                />
+
+                <DayTracking
+                    class="mt-4"
+                    :water-ml="totals.waterLiters * 1000"
+                    :caffeine-mg="totals.caffeineMg"
+                    :macros="totals"
+                    :entry-count="entries?.length ?? 0"
+                    :nutrients-entry-count="totals.nutrientsEntryCount"
                 />
             </section>
 
@@ -74,7 +84,8 @@
 </template>
 
 <script setup lang="ts">
-import type { CreatedEntry } from "~/api/types";
+import type { CreatedEntry, DayEntry } from "~/api/types";
+import { useTracking } from "~/features/account/useAccount";
 import { useDayEntriesQuery, useDaySummaryQuery } from "~/features/diary/queries";
 
 definePageMeta({
@@ -108,12 +119,22 @@ const { data: entries, isPending, isError } = useDayEntriesQuery(isoDate)
 // Výdej dne ze serveru (BMR + aktivní kalorie podle zdroje)
 const { data: summary } = useDaySummaryQuery(isoDate)
 
+const tracking = useTracking()
+
 // Součty z položek – po úpravě nebo smazání se hned přepočítají
 const totals = computed(() => {
     const list = entries.value ?? []
+    const sum = (pick: (e: DayEntry) => number | null) => list.reduce((total, e) => total + Number(pick(e) ?? 0), 0)
     return {
-        kcal: list.reduce((sum, e) => sum + Number(e.kcal), 0),
-        waterLiters: list.reduce((sum, e) => sum + Number(e.water), 0) / 1000,
+        kcal: sum((e) => e.kcal),
+        waterLiters: sum((e) => e.water) / 1000,
+        proteinG: sum((e) => e.proteinG),
+        carbsG: sum((e) => e.carbsG),
+        sugarG: sum((e) => e.sugarG),
+        fatG: sum((e) => e.fatG),
+        caffeineMg: sum((e) => e.caffeineMg),
+        // Starší záznamy odhad makroživin a kofeinu nemají
+        nutrientsEntryCount: list.filter((e) => e.proteinG != null).length,
     }
 })
 

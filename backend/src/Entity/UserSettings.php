@@ -55,6 +55,24 @@ class UserSettings
     #[ORM\Column(type: "boolean", nullable: false, options: ['default' => false])]
     protected bool $photoGalleryEnabled = false;
 
+    // Pokročilé – hlídání pitného režimu proti dennímu cíli (null = výchozí cíl na frontendu)
+    #[ORM\Column(type: "boolean", nullable: false, options: ['default' => false])]
+    protected bool $hydrationEnabled = false;
+
+    #[ORM\Column(type: "integer", nullable: true)]
+    protected ?int $waterGoalMl = null;
+
+    // Pokročilé, jen některé typy účtů (AccountType::FEATURE_CAFFEINE) – hlídání kofeinu proti dennímu limitu
+    #[ORM\Column(type: "boolean", nullable: false, options: ['default' => false])]
+    protected bool $caffeineEnabled = false;
+
+    #[ORM\Column(type: "integer", nullable: true)]
+    protected ?int $caffeineLimitMg = null;
+
+    // Pokročilé, jen některé typy účtů (AccountType::FEATURE_MACROS) – zobrazení makroživin
+    #[ORM\Column(type: "boolean", nullable: false, options: ['default' => false])]
+    protected bool $macrosEnabled = false;
+
     #[ORM\Column(name: "update_at", type: "datetime", nullable: true)]
     protected \DateTimeInterface $updatedAt;
 
@@ -89,6 +107,61 @@ class UserSettings
     public function setPhotoGalleryEnabled(bool $photoGalleryEnabled): UserSettings
     {
         $this->photoGalleryEnabled = $photoGalleryEnabled;
+        return $this;
+    }
+
+    public function isHydrationEnabled(): bool
+    {
+        return $this->hydrationEnabled;
+    }
+
+    public function setHydrationEnabled(bool $hydrationEnabled): UserSettings
+    {
+        $this->hydrationEnabled = $hydrationEnabled;
+        return $this;
+    }
+
+    public function getWaterGoalMl(): ?int
+    {
+        return $this->waterGoalMl;
+    }
+
+    public function setWaterGoalMl(?int $waterGoalMl): UserSettings
+    {
+        $this->waterGoalMl = $waterGoalMl;
+        return $this;
+    }
+
+    public function isCaffeineEnabled(): bool
+    {
+        return $this->caffeineEnabled;
+    }
+
+    public function setCaffeineEnabled(bool $caffeineEnabled): UserSettings
+    {
+        $this->caffeineEnabled = $caffeineEnabled;
+        return $this;
+    }
+
+    public function getCaffeineLimitMg(): ?int
+    {
+        return $this->caffeineLimitMg;
+    }
+
+    public function setCaffeineLimitMg(?int $caffeineLimitMg): UserSettings
+    {
+        $this->caffeineLimitMg = $caffeineLimitMg;
+        return $this;
+    }
+
+    public function isMacrosEnabled(): bool
+    {
+        return $this->macrosEnabled;
+    }
+
+    public function setMacrosEnabled(bool $macrosEnabled): UserSettings
+    {
+        $this->macrosEnabled = $macrosEnabled;
         return $this;
     }
 

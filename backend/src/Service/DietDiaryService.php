@@ -34,6 +34,13 @@ class DietDiaryService
             ->setEntryDate($entryDate ?? new \DateTimeImmutable('today'))
             ->setCreatedAt(new \DateTime())
             ->setUser($this->getLoggedUser())
+            ->setNutrients(
+                $this->roundAmount($record->proteinG),
+                $this->roundAmount($record->carbsG),
+                $this->roundAmount($record->sugarG),
+                $this->roundAmount($record->fatG),
+                $this->roundAmount($record->caffeineMg),
+            )
         ;
 
         $this->entityManager->persist($newItem);
@@ -81,11 +88,22 @@ class DietDiaryService
                 $item->getId(),
                 $item->getContent(),
                 $item->getKcal(),
-                $item->getWaterInMl()
+                $item->getWaterInMl(),
+                $item->getProteinG(),
+                $item->getCarbsG(),
+                $item->getSugarG(),
+                $item->getFatG(),
+                $item->getCaffeineMg(),
             );
         }
 
         return $outItems;
+    }
+
+    // Odhad AI na celé jednotky; záporné hodnoty (chyba modelu) jako 0
+    private function roundAmount(?float $value): ?int
+    {
+        return $value === null ? null : max(0, (int) round($value));
     }
 
     public function getLoggedUser(): User

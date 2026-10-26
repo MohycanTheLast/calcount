@@ -34,6 +34,23 @@ class DietDiary
     #[ORM\Column(name: "entry_date", type: "date_immutable", nullable: false)]
     protected \DateTimeImmutable $entryDate;
 
+    // Odhad AI: makroživiny v gramech a kofein v mg. null u záznamů z doby, kdy se ještě neodhadovaly.
+    #[ORM\Column(type: "integer", nullable: true)]
+    protected ?int $proteinG = null;
+
+    #[ORM\Column(type: "integer", nullable: true)]
+    protected ?int $carbsG = null;
+
+    // Z toho cukry (část sacharidů)
+    #[ORM\Column(type: "integer", nullable: true)]
+    protected ?int $sugarG = null;
+
+    #[ORM\Column(type: "integer", nullable: true)]
+    protected ?int $fatG = null;
+
+    #[ORM\Column(type: "integer", nullable: true)]
+    protected ?int $caffeineMg = null;
+
     #[ORM\Column(name: "update_at", type: "datetime", nullable: true)]
     protected \DateTimeInterface $updatedAt;
 
@@ -81,6 +98,42 @@ class DietDiary
     public function setWaterInMl(int $waterInMl): DietDiary
     {
         $this->waterInMl = $waterInMl;
+        return $this;
+    }
+
+    public function getProteinG(): ?int
+    {
+        return $this->proteinG;
+    }
+
+    public function getCarbsG(): ?int
+    {
+        return $this->carbsG;
+    }
+
+    public function getSugarG(): ?int
+    {
+        return $this->sugarG;
+    }
+
+    public function getFatG(): ?int
+    {
+        return $this->fatG;
+    }
+
+    public function getCaffeineMg(): ?int
+    {
+        return $this->caffeineMg;
+    }
+
+    // Makroživiny a kofein se nastavují vždy společně (jeden odhad AI)
+    public function setNutrients(?int $proteinG, ?int $carbsG, ?int $sugarG, ?int $fatG, ?int $caffeineMg): DietDiary
+    {
+        $this->proteinG = $proteinG;
+        $this->carbsG = $carbsG;
+        $this->sugarG = $sugarG;
+        $this->fatG = $fatG;
+        $this->caffeineMg = $caffeineMg;
         return $this;
     }
 

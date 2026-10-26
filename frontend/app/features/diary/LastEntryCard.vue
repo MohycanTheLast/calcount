@@ -5,10 +5,13 @@
                 {{ entry.message }}
             </p>
 
-            <div class="flex gap-6 text-base font-semibold">
+            <div class="flex flex-wrap gap-x-6 gap-y-1 text-base font-semibold">
                 <div>🔥 {{ formatKcal(entry.kcal) }} kcal</div>
                 <div>💧 {{ formatLiters(entry.waterLiters) }} l</div>
+                <div v-if="tracking.caffeine && entry.caffeineMg">☕ {{ Math.round(entry.caffeineMg) }} mg</div>
             </div>
+
+            <p v-if="macrosText" class="text-sm cc-subtle">{{ macrosText }}</p>
 
             <div class="flex items-center justify-between pt-1">
                 <button type="button" class="cc-link" @click="startEdit">
@@ -65,9 +68,11 @@
 </template>
 
 <script setup lang="ts">
+import type { Nutrients } from "~/api/types";
+import { useTracking } from "~/features/account/useAccount";
 import { useDiaryMutations } from "~/features/diary/queries";
 
-export type LastEntry = {
+export type LastEntry = Partial<Nutrients> & {
     id: number
     kcal: number
     waterLiters: number
@@ -85,6 +90,15 @@ const emit = defineEmits<{
 }>()
 
 const { updateEntry, deleteEntry } = useDiaryMutations()
+const tracking = useTracking()
+
+// Makroživiny z odhadu AI, jen se zapnutým hlídáním
+const macrosText = computed(() => (tracking.value.macros ? formatMacrosShort({
+    proteinG: props.entry.proteinG,
+    carbsG: props.entry.carbsG,
+    sugarG: props.entry.sugarG,
+    fatG: props.entry.fatG,
+}) : null))
 
 const mode = ref<'view' | 'edit'>('view')
 const kcal = ref<number | null>(null)

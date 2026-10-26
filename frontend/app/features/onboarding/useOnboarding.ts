@@ -1,22 +1,10 @@
-import { useQuery, useQueryClient } from '@tanstack/vue-query'
+import { useQueryClient } from '@tanstack/vue-query'
 import type { CurrentUser } from '~/api/types'
 import { useUserApi } from '~/api/user'
+import { CURRENT_USER_KEY } from '~/features/account/useAccount'
 
 // welcome = uvítání po prvním přihlášení, tour = průvodce po prvcích Deníku
 export type OnboardingPhase = 'idle' | 'welcome' | 'tour'
-
-const CURRENT_USER_KEY = ['user', 'me'] as const
-
-// Přihlášený uživatel – podle onboardingCompleted se po prvním přihlášení ukáže uvítání
-export const useCurrentUserQuery = () => {
-    const userApi = useUserApi()
-
-    return useQuery({
-        queryKey: CURRENT_USER_KEY,
-        queryFn: () => userApi.me(),
-        staleTime: Infinity,
-    })
-}
 
 export const useOnboarding = () => {
     const phase = useState<OnboardingPhase>('onboarding:phase', () => 'idle')

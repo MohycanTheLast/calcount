@@ -7,7 +7,9 @@
                 <p class="mt-1 text-sm cc-subtle">
                     {{ formatKcal(entry.kcal) }} kcal
                     <template v-if="entry.water"> · {{ formatLiters(entry.water / 1000) }} l</template>
+                    <template v-if="tracking.caffeine && entry.caffeineMg"> · ☕ {{ entry.caffeineMg }} mg</template>
                 </p>
+                <p v-if="macrosText" class="mt-0.5 text-xs cc-subtle">{{ macrosText }}</p>
             </div>
 
             <button
@@ -62,6 +64,7 @@
 
 <script setup lang="ts">
 import type { DayEntry } from "~/api/types";
+import { useTracking } from "~/features/account/useAccount";
 import { useDiaryMutations } from "~/features/diary/queries";
 
 // Řádek záznamu v detailu dne. Upravovat jde vždy jen jeden řádek – o tom rozhoduje stránka (prop editing).
@@ -77,6 +80,10 @@ const emit = defineEmits<{
 }>()
 
 const { updateEntry, deleteEntry } = useDiaryMutations()
+const tracking = useTracking()
+
+// Makroživiny záznamu (B/S/C/T), jen se zapnutým hlídáním a u záznamů s odhadem
+const macrosText = computed(() => (tracking.value.macros ? formatMacrosShort(props.entry) : null))
 
 const editKcal = ref<number | null>(null)
 const editWaterL = ref<number | null>(null)

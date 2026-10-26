@@ -24,6 +24,12 @@ class DaySummaryService
 {
     public const MAX_RANGE_DAYS = 366;
 
+    // Den bez záznamu
+    private const EMPTY_DAY = [
+        'kcal' => 0, 'waterMl' => 0, 'entryCount' => 0,
+        'proteinG' => 0, 'carbsG' => 0, 'sugarG' => 0, 'fatG' => 0, 'caffeineMg' => 0, 'nutrientsEntryCount' => 0,
+    ];
+
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly ActivityEnergyRepository $activityEnergyRepository,
@@ -53,7 +59,7 @@ class DaySummaryService
         $days = [];
         for ($day = $from; $day <= $to; $day = $day->modify('+1 day')) {
             $date = $day->format('Y-m-d');
-            $intake = $intakeByDate[$date] ?? ['kcal' => 0, 'waterMl' => 0, 'entryCount' => 0];
+            $intake = $intakeByDate[$date] ?? self::EMPTY_DAY;
 
             [$activeKcal, $activeKcalSource] = $this->resolveActiveKcal($activityByDate[$date] ?? [], $activitySource, $staticActivity);
 
@@ -69,6 +75,12 @@ class DaySummaryService
                 activeSource: $activeKcalSource,
                 expenditureKcal: $expenditure,
                 balanceKcal: $expenditure !== null ? $intake['kcal'] - $expenditure : null,
+                proteinG: $intake['proteinG'],
+                carbsG: $intake['carbsG'],
+                sugarG: $intake['sugarG'],
+                fatG: $intake['fatG'],
+                caffeineMg: $intake['caffeineMg'],
+                nutrientsEntryCount: $intake['nutrientsEntryCount'],
             );
         }
 

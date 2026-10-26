@@ -17,5 +17,13 @@ final class DaySummary
         public string $activeSource, // static | manual | apple_health | strava | none
         public ?int $expenditureKcal, // BMR + aktivní kalorie; null bez vyplněného BMR
         public ?int $balanceKcal, // příjem − výdej; záporné = deficit, kladné = přebytek
+        // Součty makroživin (g) a kofeinu (mg) ze záznamů, které je mají odhadnuté
+        public int $proteinG = 0,
+        public int $carbsG = 0,
+        public int $sugarG = 0,
+        public int $fatG = 0,
+        public int $caffeineMg = 0,
+        // Kolik záznamů dne má odhad makroživin a kofeinu (starší záznamy ho nemají)
+        public int $nutrientsEntryCount = 0,
     ) {}
 }

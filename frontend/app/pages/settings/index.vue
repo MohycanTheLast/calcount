@@ -144,6 +144,10 @@
                 <h2 class="cc-section-title">Účet</h2>
 
                 <div class="cc-list">
+                    <div v-if="currentUser" class="cc-list-row flex items-center justify-between gap-3 text-base">
+                        <span>Typ účtu</span>
+                        <span class="cc-subtle">{{ ACCOUNT_TYPE_LABELS[currentUser.accountType] }}</span>
+                    </div>
                     <button type="button" class="cc-list-row block w-full text-left text-base" @click="replayOnboarding">
                         Průvodce aplikací
                     </button>
@@ -162,6 +166,7 @@
 </template>
 
 <script setup lang="ts">
+import { ACCOUNT_TYPE_LABELS, useCurrentUserQuery } from "~/features/account/useAccount";
 import { useDiaryMutations } from "~/features/diary/queries";
 import { useOnboarding } from "~/features/onboarding/useOnboarding";
 
@@ -174,6 +179,7 @@ const { settings, loaded, loading, saving, error, fetchFromApi, saveToApi } = us
 const { signOut } = useAuth()
 const { invalidateDiary } = useDiaryMutations()
 const { replay: replayOnboarding } = useOnboarding()
+const { data: currentUser } = useCurrentUserQuery()
 
 const appVersion = useRuntimeConfig().public.appVersion
 

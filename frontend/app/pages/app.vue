@@ -53,6 +53,11 @@ const onCreated = (entry: CreatedEntry) => {
     lastEntry.value = {
         id: entry.id,
         kcal: entry.kcal,
+        proteinG: entry.proteinG,
+        carbsG: entry.carbsG,
+        sugarG: entry.sugarG,
+        fatG: entry.fatG,
+        caffeineMg: entry.caffeineMg,
         waterLiters: entry.waterInMl / 1000,
         message: entry.comment ?? 'Spočítal jsem orientační hodnoty na základě zadaného textu:',
     }

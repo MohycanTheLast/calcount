@@ -34,7 +34,7 @@
             </span>
             <slot v-else name="no-expenditure" />
 
-            <span class="cc-subtle whitespace-nowrap">💧 {{ formatLiters(waterLiters) }} l</span>
+            <span v-if="!hideWater" class="cc-subtle whitespace-nowrap">💧 {{ formatLiters(waterLiters) }} l</span>
         </div>
     </div>
 </template>
@@ -51,6 +51,8 @@ const props = defineProps<{
     expenditureKcal: number | null
     // Zdroj aktivních kalorií ve výdeji – u synchronizovaných a ručně upravených se ukáže ikona
     activeSource?: DaySummary['activeSource']
+    // Pitný režim ukazuje DayTracking s cílem (hlídání zapnuté) – tady by byl dvakrát
+    hideWater?: boolean
 }>()
 
 const balance = computed(() => dayBalance(props.kcal, props.expenditureKcal))

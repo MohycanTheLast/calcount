@@ -63,6 +63,86 @@
                 </div>
             </section>
 
+            <!-- HLÍDÁNÍ – ukazatele v Deníku a detailu dne -->
+            <section>
+                <h2 class="cc-section-title">Hlídání</h2>
+
+                <div class="cc-list">
+                    <div class="cc-list-row space-y-3">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input v-model="settings.hydrationEnabled" type="checkbox" class="cc-checkbox" />
+                            <span>
+                                <span class="block text-base">Pitný režim</span>
+                                <span class="block mt-1 text-xs cc-subtle">Kolik jsi za den vypil(a) oproti cíli.</span>
+                            </span>
+                        </label>
+                        <label v-if="settings.hydrationEnabled" class="relative block pl-8">
+                            <span class="block text-sm cc-subtle mb-1">Denní cíl</span>
+                            <input
+                                v-model.number="waterGoalLiters"
+                                type="number"
+                                min="0.5"
+                                max="6"
+                                step="0.1"
+                                inputmode="decimal"
+                                class="cc-input pr-10"
+                                :placeholder="formatLiters(DEFAULT_WATER_GOAL_ML / 1000)"
+                            />
+                            <span class="absolute right-4 bottom-3.5 cc-subtle text-sm">l</span>
+                        </label>
+                    </div>
+
+                    <div class="cc-list-row space-y-3">
+                        <label class="flex items-start gap-3" :class="hasCaffeine ? 'cursor-pointer' : 'opacity-60'">
+                            <input v-model="settings.caffeineEnabled" type="checkbox" class="cc-checkbox" :disabled="!hasCaffeine" />
+                            <span>
+                                <span class="flex items-center gap-2 text-base">
+                                    Kofein
+                                    <span v-if="!hasCaffeine" class="cc-chip cc-chip--good">Premium</span>
+                                </span>
+                                <span class="block mt-1 text-xs cc-subtle">
+                                    Kofein z kávy, čaje, energetických nápojů a koly oproti dennímu limitu.
+                                </span>
+                            </span>
+                        </label>
+                        <label v-if="hasCaffeine && settings.caffeineEnabled" class="relative block pl-8">
+                            <span class="block text-sm cc-subtle mb-1">Denní limit</span>
+                            <input
+                                v-model.number="settings.caffeineLimitMg"
+                                type="number"
+                                min="50"
+                                max="1000"
+                                step="10"
+                                inputmode="numeric"
+                                class="cc-input pr-14"
+                                :placeholder="String(DEFAULT_CAFFEINE_LIMIT_MG)"
+                            />
+                            <span class="absolute right-4 bottom-3.5 cc-subtle text-sm">mg</span>
+                            <span class="block mt-1 text-xs cc-subtle">
+                                Pro zdravé dospělé se za bezpečné považuje do 400 mg denně, v těhotenství do 200 mg.
+                            </span>
+                        </label>
+                    </div>
+
+                    <label class="cc-list-row flex items-start gap-3" :class="hasMacros ? 'cursor-pointer' : 'opacity-60'">
+                        <input v-model="settings.macrosEnabled" type="checkbox" class="cc-checkbox" :disabled="!hasMacros" />
+                        <span>
+                            <span class="flex items-center gap-2 text-base">
+                                Makroživiny
+                                <span v-if="!hasMacros" class="cc-chip cc-chip--good">Premium</span>
+                            </span>
+                            <span class="block mt-1 text-xs cc-subtle">
+                                Bílkoviny, sacharidy (z toho cukry) a tuky u záznamů i za celý den.
+                            </span>
+                        </span>
+                    </label>
+                </div>
+
+                <p class="mt-2 px-1 text-xs cc-subtle">
+                    Kofein i makroživiny odhaduje AI z textu nebo fotky stejně jako kalorie – ber je jako orientační.
+                </p>
+            </section>
+
             <!-- FOTKY -->
             <section>
                 <h2 class="cc-section-title">Vkládání obrázků</h2>
@@ -83,7 +163,9 @@
 </template>
 
 <script setup lang="ts">
+import { useCurrentUserQuery } from "~/features/account/useAccount";
 import { useDiaryMutations } from "~/features/diary/queries";
+import { DEFAULT_CAFFEINE_LIMIT_MG, DEFAULT_WATER_GOAL_ML } from "~/utils/tracking";
 
 // Méně častá nastavení – základní Nastavení zůstává jednoduché. Ukládá se stejný stav jako tam.
 definePageMeta({
@@ -92,6 +174,19 @@ definePageMeta({
 
 const { settings, loaded, loading, saving, error, fetchFromApi, saveToApi } = useUserSettings()
 const { invalidateDiary } = useDiaryMutations()
+const { data: currentUser } = useCurrentUserQuery()
+
+// Kofein a makroživiny jen pro typy účtů, které je mají (backend je jinak nezapne)
+const hasCaffeine = computed(() => currentUser.value?.features.includes('caffeine') ?? false)
+const hasMacros = computed(() => currentUser.value?.features.includes('macros') ?? false)
+
+// Cíl pitného režimu se zadává v litrech, ukládá v ml; prázdné pole = výchozí cíl
+const waterGoalLiters = computed<number | null>({
+    get: () => (settings.value.waterGoalMl != null ? settings.value.waterGoalMl / 1000 : null),
+    set: (liters) => {
+        settings.value.waterGoalMl = typeof liters === 'number' && liters > 0 ? Math.round(liters * 1000) : null
+    },
+})
 
 onMounted(() => {
     if (!loaded.value) fetchFromApi().catch(() => {})

@@ -14,6 +14,11 @@ const DEFAULT_SETTINGS: UserSettings = {
     saveWeight: false,
     activitySource: 'static',
     photoGalleryEnabled: false,
+    hydrationEnabled: false,
+    waterGoalMl: null,
+    caffeineEnabled: false,
+    caffeineLimitMg: null,
+    macrosEnabled: false,
 }
 
 const THEME_STORAGE_KEY = 'cc_theme'

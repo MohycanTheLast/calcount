@@ -13,6 +13,16 @@
   Android `versionName`) – při buildu převzít z `package.json`. Číslo sestavení (iOS `CFBundleVersion`, Android
   `versionCode`) je zvlášť a musí růst s každým nahráním do obchodu, i u stejné verze.
 
+## Typ účtu
+
+Mění se zatím jen v databázi (`free`, `premium`, `superior`; funkce k typům viz `App\Model\AccountType`):
+
+```sql
+UPDATE user SET account_type = 'premium' WHERE email = '…';
+```
+
+Aplikace si typ načte po novém načtení stránky (nebo po odhlášení a přihlášení).
+
 ## Nasazení na produkci (FTP)
 
 1. **Frontend:** `npm run build` ve `frontend/` – výsledek se zkopíruje do `backend/www-root`.
