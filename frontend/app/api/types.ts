@@ -74,7 +74,7 @@ export type CreatedEntry = Partial<Nutrients> & {
     comment?: string | null
 }
 
-// POST /api/save/{id}
+// PATCH /api/diary-entries/{id}
 export type EntryValues = {
     kcal: number
     waterInMl: number

@@ -21,6 +21,10 @@ const DEFAULT_SETTINGS: UserSettings = {
     macrosEnabled: false,
 }
 
+// Vymazané číselné pole (v-model.number) má hodnotu '' – backend čeká číslo nebo null
+const emptyToNull = (value: number | null | undefined): number | null =>
+    value == null || (value as unknown) === '' ? null : value
+
 const THEME_STORAGE_KEY = 'cc_theme'
 const SETTINGS_QUERY_KEY = ['settings'] as const
 
@@ -92,17 +96,22 @@ export const useUserSettings = () => {
         error.value = null
 
         try {
+            const s = settings.value
             const saved: UserSettings = {
-                ...settings.value,
-                weightKg: settings.value.saveWeight ? settings.value.weightKg : null,
+                ...s,
+                bmrKcal: emptyToNull(s.bmrKcal),
+                avgDailyActivityKcal: emptyToNull(s.avgDailyActivityKcal),
+                weightKg: s.saveWeight ? emptyToNull(s.weightKg) : null,
+                caffeineLimitMg: emptyToNull(s.caffeineLimitMg),
             }
             await settingsApi.save(saved)
             queryClient.setQueryData(SETTINGS_QUERY_KEY, saved)
 
             applyTheme()
             persistTheme()
-        } catch (e) {
-            error.value = 'Nepodařilo se uložit nastavení.'
+        } catch (e: any) {
+            // Backend vrací u neplatné hodnoty česky popsanou chybu (např. rozsah BMR)
+            error.value = e?.data?.error ?? 'Nepodařilo se uložit nastavení.'
             throw e
         } finally {
             saving.value = false

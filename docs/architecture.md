@@ -123,9 +123,19 @@ Počítá `DaySummaryService` – jediné místo, kde se počítá výdej a bila
 | `GET/POST /api/tokens`, `DELETE /api/tokens/{id}` | osobní API tokeny (vytvoření vrátí plný token jen jednou; první token přepne `activitySource` na `synced_or_static`) |
 | `POST /api/auth/google`, `/api/auth/apple` | přihlášení/registrace přes ID token (bez client ID vypnuté) |
 | `POST /api/calculate` | nový záznam z textu (AI odhad) k dnešku, nebo s `date` k zadanému dni (zpětný zápis, max. 366 dní zpět) |
-| `POST /api/save/{id}`, `/api/delete/{id}` | úprava / smazání záznamu (jen vlastník) |
+| `PATCH/DELETE /api/diary-entries/{id}` | úprava (`{kcal?, waterInMl?}`) / smazání záznamu, jen vlastník (cizí záznam = 404). Staré `POST /api/save/{id}`, `/api/delete/{id}` zůstávají do dalšího vydání kvůli otevřeným starším verzím frontendu |
 | `GET /api/diary-day/{YYYY-MM-DD}` | záznamy dne |
 | `POST /api/upload` | rozpoznání jídla na fotce (nic neukládá) |
 | `GET/POST /api/user/settings`, `GET /api/user/me` | nastavení, přihlášený uživatel (vč. `onboardingCompleted`) |
 | `POST /api/user/onboarding` | úvodní průvodce dokončený/přeskočený |
 | `POST/GET /ops/cache-clear` | smazání cache na serveru (token v hlavičce, viz operations.md) |
+
+### Validace a formát chyb
+
+- Těla požadavků z aplikace se mapují na DTO v `backend/src/Dto/` přes `#[MapRequestPayload]` a kontrolují
+  Symfony Validatorem (hlášky česky přímo v atributech). `POST /api/activity` (Zkratky) a `/api/register/verify`
+  se kontrolují ručně – posílají volnější formát (čísla jako text, objekt i pole).
+- Všechny chyby API mají tvar `{ "error": "text pro uživatele" }`; frontend zobrazuje `e.data.error`.
+  Neplatné tělo požadavku = **422** a navíc `violations: [{ field, message }]` (`error` = první z nich).
+  Chyby mimo kontrolery (401 z JWT, 403, 404, 405, neplatný JSON) převádí `ApiExceptionListener`;
+  text výjimky se klientovi neposílá (jen standardní název stavu, např. „Not Found“).

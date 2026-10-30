@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Dto\ManualActivityRequest;
 use App\Entity\ActivityEnergy;
 use App\Entity\Security\User;
 use App\Repository\ActivityEnergyRepository;
@@ -11,6 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
@@ -21,7 +23,7 @@ class ActivityController extends AbstractController
     // Jak daleko zpět smí synchronizace zapisovat
     private const SYNC_MAX_DAYS_BACK = 31;
     private const SYNC_MAX_DAYS_PER_REQUEST = 7;
-    private const MAX_ACTIVE_KCAL = 10000;
+    private const MAX_ACTIVE_KCAL = ManualActivityRequest::MAX_ACTIVE_KCAL;
 
     public function __construct(
         protected ActivityEnergyRepository $activityEnergyRepository,
@@ -36,6 +38,9 @@ class ActivityController extends AbstractController
      *
      * Tělo: { "date": "YYYY-MM-DD", "activeKcal": 512 } nebo pole až 7 takových dní.
      * Den se přepíše (upsert), opakované odeslání nic nesčítá. Vrací souhrny uložených dní.
+     *
+     * Tělo se kontroluje ručně, ne přes MapRequestPayload: může to být objekt i pole a Zkratky posílají čísla
+     * i jako český text („1 512,4 kcal“). Chyby mají stejný tvar { "error": … } jako zbytek API.
      */
     #[Route('/api/activity', name: 'api_activity_sync', methods: ['POST'])]
     public function sync(Request $request): JsonResponse
@@ -87,22 +92,17 @@ class ActivityController extends AbstractController
      * Tělo: { "activeKcal": 400 }. Vrací souhrn dne.
      */
     #[Route('/api/activity/manual/{date}', name: 'api_activity_manual_set', requirements: ['date' => '\d{4}-\d{2}-\d{2}'], methods: ['PUT'])]
-    public function setManual(string $date, Request $request): JsonResponse
+    public function setManual(string $date, #[MapRequestPayload] ManualActivityRequest $payload): JsonResponse
     {
         $day = $this->parseDate($date);
         if ($day === null || !$this->isNotInFuture($day, new \DateTimeImmutable('today'))) {
             return $this->error('Invalid date');
         }
 
-        $activeKcal = $this->parseActiveKcal($request->toArray()['activeKcal'] ?? null);
-        if ($activeKcal === null) {
-            return $this->error(sprintf('Aktivní kalorie musí být číslo od 0 do %d.', self::MAX_ACTIVE_KCAL));
-        }
-
         /** @var User $user */
         $user = $this->getUser();
 
-        $this->upsert($user, $day, ActivityEnergy::SOURCE_MANUAL, $activeKcal);
+        $this->upsert($user, $day, ActivityEnergy::SOURCE_MANUAL, (int) round((float) $payload->activeKcal));
         $this->entityManager->flush();
 
         return $this->json($this->summaries($user, [$day])[0]);

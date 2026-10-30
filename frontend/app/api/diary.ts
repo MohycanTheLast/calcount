@@ -17,10 +17,10 @@ export const useDiaryApi = () => {
             apiFetch<CreatedEntry>('/api/calculate', { method: 'POST', body: { food: text, date } }),
 
         updateEntry: (id: number, values: EntryValues) =>
-            apiFetch<void>(`/api/save/${id}`, { method: 'POST', body: values }),
+            apiFetch<void>(`/api/diary-entries/${id}`, { method: 'PATCH', body: values }),
 
         deleteEntry: (id: number) =>
-            apiFetch<void>(`/api/delete/${id}`, { method: 'POST' }),
+            apiFetch<void>(`/api/diary-entries/${id}`, { method: 'DELETE' }),
 
         // Rozpozná jídlo na fotce; vrací jen text k doplnění do pole, nic neukládá
         uploadPhoto: (file: File) => {

@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Dto\RegisterRequest;
 use App\Entity\Security\User;
 use App\Repository\UserRepository;
 use App\Security\EmailVerifier;
@@ -12,6 +13,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -19,10 +21,6 @@ class RegistrationController extends AbstractController
 {
     // Verze podmínek užívání = datum jejich účinnosti. Měnit spolu s frontend/app/pages/terms.vue.
     public const TERMS_VERSION = '2026-10-26';
-
-    private const PASSWORD_MIN_LENGTH = 8;
-    // Hashování extrémně dlouhého hesla zbytečně zatěžuje server
-    private const PASSWORD_MAX_LENGTH = 4096;
 
     public function __construct(
         protected UserRepository $userRepository,
@@ -41,27 +39,9 @@ class RegistrationController extends AbstractController
      * - `verification_pending` – účet čeká na potvrzení odkazem z e-mailu.
      */
     #[Route('/api/register', name: 'api_register', methods: ['POST'])]
-    public function register(Request $request): JsonResponse
+    public function register(#[MapRequestPayload] RegisterRequest $payload, Request $request): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-
-        $email = is_string($data['email'] ?? null) ? mb_strtolower(trim($data['email'])) : '';
-        $password = $data['password'] ?? null;
-
-        if ($email === '' || mb_strlen($email) > 180 || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return $this->json(['error' => 'Zadej platný e-mail.'], Response::HTTP_BAD_REQUEST);
-        }
-
-        if (!is_string($password) || mb_strlen($password) < self::PASSWORD_MIN_LENGTH || strlen($password) > self::PASSWORD_MAX_LENGTH) {
-            return $this->json(
-                ['error' => sprintf('Heslo musí mít aspoň %d znaků.', self::PASSWORD_MIN_LENGTH)],
-                Response::HTTP_BAD_REQUEST
-            );
-        }
-
-        if (($data['termsAccepted'] ?? false) !== true) {
-            return $this->json(['error' => 'Pro registraci je potřeba souhlasit s podmínkami užívání.'], Response::HTTP_BAD_REQUEST);
-        }
+        $email = $payload->getNormalizedEmail();
 
         $ip = $request->getClientIp();
         if ($this->registrationThrottler->isBlocked($ip)) {
@@ -79,7 +59,7 @@ class RegistrationController extends AbstractController
         $user = (new User())
             ->setEmail($email)
             ->acceptTerms(self::TERMS_VERSION);
-        $user->setPassword($this->passwordHasher->hashPassword($user, $password));
+        $user->setPassword($this->passwordHasher->hashPassword($user, $payload->password));
 
         try {
             $this->entityManager->persist($user);

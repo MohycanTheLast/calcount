@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Dto\CreateTokenRequest;
 use App\Entity\Security\PersonalAccessToken;
 use App\Entity\Security\User;
 use App\Entity\UserSettings;
@@ -9,8 +10,8 @@ use App\Repository\PersonalAccessTokenRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
@@ -19,7 +20,6 @@ use Symfony\Component\Routing\Attribute\Route;
 class PersonalAccessTokensController extends AbstractController
 {
     private const MAX_ACTIVE_TOKENS = 5;
-    private const NAME_MAX_LENGTH = 100;
     private const DEFAULT_NAME = 'iPhone – Zkratky';
 
     public function __construct(
@@ -44,7 +44,7 @@ class PersonalAccessTokensController extends AbstractController
      * aby se odeslaná data hned projevila. Odpověď proto obsahuje i aktuální activitySource.
      */
     #[Route('/api/tokens', name: 'api_tokens_create', methods: ['POST'])]
-    public function create(Request $request): JsonResponse
+    public function create(#[MapRequestPayload] CreateTokenRequest $payload = new CreateTokenRequest()): JsonResponse
     {
         /** @var User $user */
         $user = $this->getUser();
@@ -57,12 +57,9 @@ class PersonalAccessTokensController extends AbstractController
             );
         }
 
-        $name = trim((string) (json_decode($request->getContent(), true)['name'] ?? ''));
+        $name = trim($payload->name);
         if ($name === '') {
             $name = self::DEFAULT_NAME;
-        }
-        if (mb_strlen($name) > self::NAME_MAX_LENGTH) {
-            return $this->json(['error' => sprintf('Název může mít nejvýš %d znaků.', self::NAME_MAX_LENGTH)], Response::HTTP_BAD_REQUEST);
         }
 
         [$token, $plainToken] = PersonalAccessToken::generate($user, $name, [PersonalAccessToken::SCOPE_ACTIVITY_WRITE]);

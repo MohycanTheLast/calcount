@@ -80,3 +80,9 @@ Chyba „An error occurred while trying to encode the JWT token“ = privátní 
 - Po změně `php/Dockerfile` nebo `docker-compose.yml`: `docker compose up -d --build`.
 - Migrace: `docker compose exec php php bin/console doctrine:migrations:migrate`.
 - Frontend: `npm run dev` (proxy `/api` na `localhost:80`), testy `npm run test`, typy `npm run typecheck`.
+- Testy backendu (PHPUnit, `backend/tests/`): `docker compose exec php php bin/phpunit`, nebo bez běžících
+  kontejnerů z `backend/`: `docker run --rm -v "$PWD:/app" -w /app backend-php php bin/phpunit`
+  (v Git Bash na Windows s `MSYS_NO_PATHCONV=1` a `$(pwd -W)`).
+  Běží nad SQLite v paměti (`.env.test`, schéma z entit), MySQL ani `.env.local` nepotřebují. JWT klíče si
+  vygenerují samy (`tests/bootstrap.php`, jen v paměti), OpenAI nahrazuje `tests/Support/FakeOpenAiClient`.
+  Každý test začíná s prázdnou DB i cache (`tests/ApiTestCase.php`).

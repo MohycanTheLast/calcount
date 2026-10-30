@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\Dto\CreateDiaryEntryRequest;
+use App\Dto\UpdateDiaryEntryRequest;
 use App\Entity\DietDiary;
 use App\Entity\Security\User;
 use App\Security\Voter\DietDiaryVoter;
@@ -14,19 +16,14 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 
 
 class ApiController extends AbstractController
 {
-    // Delší text by zbytečně zvyšoval cenu volání AI (a do DB se stejně ukládá jen 255 znaků)
-    private const MAX_FOOD_TEXT_LENGTH = 500;
-
     private const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
     private const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-
-    // Zpětný zápis do detailu dne – jak daleko zpět (stejně jako max. rozsah souhrnů dní)
-    private const MAX_ENTRY_DAYS_BACK = 366;
 
     public function __construct(
         protected OpenAiClient $openAiClient,
@@ -42,41 +39,19 @@ class ApiController extends AbstractController
      * bez data se záznam uloží k dnešku, s datem jde o zpětný zápis z detailu dne.
      */
     #[Route('/api/calculate', methods: ['POST'])]
-    public function calculate(Request $request): JsonResponse
+    public function calculate(#[MapRequestPayload] CreateDiaryEntryRequest $payload): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        $text = is_array($data) ? ($data['food'] ?? null) : null;
-
-        if (!is_string($text) || trim($text) === '') {
-            return new JsonResponse(["error" => "No data provided"], Response::HTTP_BAD_REQUEST);
-        }
-
-        $entryDate = $this->parseEntryDate(is_array($data) ? ($data['date'] ?? null) : null);
-        if ($entryDate === false) {
-            return new JsonResponse(
-                ['error' => sprintf('Zapisovat jde jen do dnešního dne nebo nejvýš %d dní zpět.', self::MAX_ENTRY_DAYS_BACK)],
-                Response::HTTP_BAD_REQUEST
-            );
-        }
-
-        if (mb_strlen($text) > self::MAX_FOOD_TEXT_LENGTH) {
-            return new JsonResponse(
-                ["error" => sprintf('Text je příliš dlouhý (max. %d znaků).', self::MAX_FOOD_TEXT_LENGTH)],
-                Response::HTTP_BAD_REQUEST
-            );
-        }
-
         if (!$this->aiUsageLimiter->tryConsume($this->getAppUser())) {
             return $this->dailyLimitExceeded();
         }
 
         try {
-            $resultData = $this->openAiClient->estimateNutrition($text);
+            $resultData = $this->openAiClient->estimateNutrition($payload->food);
         } catch (\Throwable $e) {
             return $this->aiFailure('calculate', $e);
         }
 
-        $savedItem = $this->dietDiaryService->create($text, $resultData, $entryDate);
+        $savedItem = $this->dietDiaryService->create($payload->food, $resultData, $payload->getEntryDate());
 
         $resultData->id = $savedItem->getId();
 
@@ -84,39 +59,22 @@ class ApiController extends AbstractController
     }
 
     /**
-     * @return \DateTimeImmutable|null|false null = bez data (dnešek), false = neplatné nebo mimo povolený rozsah
+     * Ruční oprava kalorií / vody u záznamu. Tělo: { "kcal": 450, "waterInMl": 250 } (obojí volitelné).
      */
-    private function parseEntryDate(mixed $value): \DateTimeImmutable|null|false
-    {
-        if ($value === null || $value === '') {
-            return null;
-        }
-
-        $date = is_string($value) ? \DateTimeImmutable::createFromFormat('!Y-m-d', $value) : false;
-        if ($date === false || $date->format('Y-m-d') !== $value) {
-            return false;
-        }
-
-        // Den uživatele může být o den napřed oproti serveru (časová pásma) – zítřek ještě povolíme
-        $today = new \DateTimeImmutable('today');
-        if ($date > $today->modify('+1 day') || $date < $today->modify(sprintf('-%d days', self::MAX_ENTRY_DAYS_BACK))) {
-            return false;
-        }
-
-        return $date;
-    }
-
+    #[Route('/api/diary-entries/{id}', requirements: ['id' => '\d+'], methods: ['PATCH'])]
+    // Starší frontend (do verze 0.2.0) – smazat po dalším vydání
     #[Route('/api/save/{id}', requirements: ['id' => '\d+'], methods: ['POST'])]
-    public function save(DietDiary $diaryRecord, Request $request): JsonResponse
+    public function update(DietDiary $diaryRecord, #[MapRequestPayload] UpdateDiaryEntryRequest $payload): JsonResponse
     {
         $this->denyUnlessOwner($diaryRecord);
 
-        $data = json_decode($request->getContent(), true);
-        $this->dietDiaryService->update($diaryRecord, is_array($data) ? $data : []);
+        $this->dietDiaryService->update($diaryRecord, $payload);
 
-        return new JsonResponse(status: Response::HTTP_ACCEPTED);
+        return new JsonResponse(status: Response::HTTP_NO_CONTENT);
     }
 
+    #[Route('/api/diary-entries/{id}', requirements: ['id' => '\d+'], methods: ['DELETE'])]
+    // Starší frontend (do verze 0.2.0) – smazat po dalším vydání
     #[Route('/api/delete/{id}', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function delete(DietDiary $diaryRecord): JsonResponse
     {
@@ -124,7 +82,7 @@ class ApiController extends AbstractController
 
         $this->dietDiaryService->delete($diaryRecord);
 
-        return new JsonResponse(status: Response::HTTP_ACCEPTED);
+        return new JsonResponse(status: Response::HTTP_NO_CONTENT);
     }
 
     #[Route('/api/diary-day/{date}', requirements: ['date' => '\d{4}-\d{2}-\d{2}'], methods: ['GET'])]

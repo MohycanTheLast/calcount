@@ -1,0 +1,12 @@
+# Služby jen pro testy (APP_ENV=test) – přepisují services.yaml.
+services:
+    # Testy nevolají OpenAI – pevný odhad místo skutečného volání
+    App\Service\OpenAiClient:
+        class: App\Tests\Support\FakeOpenAiClient
+        autowire: true
+        arguments:
+            $openAiApiKey: 'test-not-used'
+
+    # Očekávané chyby (404, 422…) by jinak výchozí logger vypisoval do výstupu testů
+    logger:
+        class: Psr\Log\NullLogger

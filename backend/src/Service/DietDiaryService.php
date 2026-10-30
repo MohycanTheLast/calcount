@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Dto\UpdateDiaryEntryRequest;
 use App\Entity\DietDiary;
 use App\Entity\Security\User;
 use App\Model\DietDiaryEntry;
@@ -49,14 +50,14 @@ class DietDiaryService
         return $newItem;
     }
 
-    public function update(DietDiary $record, array $data): void
+    public function update(DietDiary $record, UpdateDiaryEntryRequest $values): void
     {
-        if (isset($data['kcal'])) {
-            $record->setKcal((int)$data['kcal']);
+        if ($values->kcal !== null) {
+            $record->setKcal((int) round($values->kcal));
         }
 
-        if (isset($data['waterInMl'])) {
-            $record->setWaterInMl((int)$data['waterInMl']);
+        if ($values->waterInMl !== null) {
+            $record->setWaterInMl((int) round($values->waterInMl));
         }
 
         // Vlastník se nastavuje jen při vytvoření; úpravu cizího záznamu blokuje DietDiaryVoter

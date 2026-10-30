@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Dto\LoginRequest;
 use App\Entity\Security\User;
 use App\Entity\Security\UserIdentity;
 use App\Repository\UserIdentityRepository;
@@ -19,6 +20,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -39,18 +41,10 @@ class SecurityController extends AbstractController
 
     #[Route('/api/login', name: 'api_login', methods: ['POST'])]
     public function login(
+        #[MapRequestPayload] LoginRequest $payload,
         Request $request,
     ): JsonResponse {
-        $data = json_decode($request->getContent(), true);
-
-        if (!is_string($data['email'] ?? null) || !is_string($data['password'] ?? null)) {
-            return $this->json(
-                ['error' => 'Missing credentials'],
-                Response::HTTP_BAD_REQUEST
-            );
-        }
-
-        $email = $data['email'];
+        $email = $payload->email;
         $ip = $request->getClientIp();
 
         if ($this->loginThrottler->isBlocked($email, $ip)) {
@@ -62,7 +56,7 @@ class SecurityController extends AbstractController
 
         $user = $this->userRepository->findOneBy(['email' => $email]);
 
-        if (!$user || !$this->passwordHasher->isPasswordValid($user, $data['password'])) {
+        if (!$user || !$this->passwordHasher->isPasswordValid($user, $payload->password)) {
             $this->loginThrottler->registerFailure($email, $ip);
 
             return $this->json(
